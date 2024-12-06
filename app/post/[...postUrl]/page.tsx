@@ -1,6 +1,5 @@
+"use server";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { fetchPost, fetchTestPost } from "@/util/fetchPost";
-import { Document as ASDocument } from "@fedify/fedify/vocab";
 import Toot from "@/components/toot";
 import Nav from "@/components/nav";
 import TootAuthor from "@/components/tootAuthor";
@@ -9,7 +8,6 @@ import ImageOverlay from "@/public/image-overlay.svg";
 import classnames from "classnames";
 
 export default async function Page({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   params,
 }: {
   params: Promise<{ postUrl: string[] }>;
@@ -19,27 +17,16 @@ export default async function Page({
     "https://"
   );
 
-  // Get real data
-  const { post, author } = await fetchPost(postUrl);
-  // Use local test data
-  // const { post, author } = await fetchTestPost();
-
-  const contentHtml = post?.content?.toString() ?? "";
-
-  const images = [];
-
-  if (post?.getAttachments) {
-    for await (const attachment of post?.getAttachments()) {
-      if (attachment) {
-        if (
-          attachment instanceof ASDocument &&
-          attachment.mediaType?.startsWith("image")
-        ) {
-          images.push(attachment);
-        }
-      }
-    }
-  }
+  // TODO: Ideally we just directly call the fetchPost function
+  // But, it's not caching. Fedify on its side specifically does not cache.
+  // May need to specify the fetch function in Fedify
+  const { images, post, author, contentHtml } =
+    await // TODO: Set up environment variables for the domain
+    (
+      await fetch(
+        `https://basic-fediverse-reader.app/api/post/${encodeURI(postUrl)}`
+      )
+    ).json();
 
   return (
     <div
