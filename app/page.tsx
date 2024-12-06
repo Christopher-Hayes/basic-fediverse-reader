@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <main className="px-8 py-8 sm:py-16 min-h-screen flex flex-col gap-8 items-center justify-center">
       <Nav />
-      <div className="w-screen overflow-hidden flex-grow flex items-center">
+      <div className="w-screen overflow-hidden flex-grow flex justify-center items-center">
         <Splash />
       </div>
       <footer className="py-8 px-4 flex items-center justify-center">
