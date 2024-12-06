@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import AvatarClipPath from "@/public/avatar-clip-path.svg";
 
 const openComicFont = localFont({
   src: "./fonts/OpenComicFont.woff2",

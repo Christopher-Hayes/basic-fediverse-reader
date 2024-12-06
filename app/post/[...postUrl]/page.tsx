@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { fetchPost, fetchTestPost } from "@/util/fetchPost";
-import { Document as ASDocument, Group } from "@fedify/fedify/vocab";
+import { Document as ASDocument } from "@fedify/fedify/vocab";
 import Toot from "@/components/toot";
 import Nav from "@/components/nav";
 import TootAuthor from "@/components/tootAuthor";
@@ -24,7 +24,7 @@ export default async function Page({
   // Use local test data
   // const { post, author } = await fetchTestPost();
 
-  let contentHtml = post?.content?.toString() ?? "";
+  const contentHtml = post?.content?.toString() ?? "";
 
   const images = [];
 
