@@ -18,9 +18,9 @@ export default async function TootAuthor({
   const icon = await person.getIcon();
   const now = Temporal.Now.instant();
   // Show time since in human readable format
-  const timeSinceString = timeSince(
-    Temporal.Duration.from(now.since(post?.published!))
-  );
+  const timeSinceString = post.published
+    ? timeSince(Temporal.Duration.from(now.since(post?.published)))
+    : "Some time, I forget";
   /*
   // YYYY
   const publishedYear = post?.published?.toLocaleString("en-US", {
