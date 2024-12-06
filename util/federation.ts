@@ -1,9 +1,17 @@
-import { Application, createFederation, Endpoints, exportJwk, generateCryptoKeyPair, importJwk, MemoryKvStore } from "@fedify/fedify";
+import {
+  Application,
+  createFederation,
+  Endpoints,
+  exportJwk,
+  generateCryptoKeyPair,
+  importJwk,
+  MemoryKvStore,
+} from "@fedify/fedify";
 
 const SERVER_DOMAIN = process.env.SERVER_DOMAIN;
 // The instance actor is required for object lookups for some Mastodon servers
 // More info: https://seb.jambor.dev/posts/understanding-activitypub-part-4-threads/#the-instance-actor
-export const INSTANCE_ACTOR = SERVER_DOMAIN ?? 'username';
+export const INSTANCE_ACTOR = SERVER_DOMAIN ?? "username";
 const ORIGIN = `https://${SERVER_DOMAIN}/`;
 
 // Temp KV store for development
@@ -18,7 +26,8 @@ export const federation = createFederation<void>({
 export const context = federation.createContext(new URL(ORIGIN));
 
 // Allow the remote server to fetch this server's instance actor
-federation.setActorDispatcher("/users/{identifier}", async (context, identifier) => {
+federation
+  .setActorDispatcher("/users/{identifier}", async (context, identifier) => {
     if (identifier != INSTANCE_ACTOR) {
       return null;
     }
@@ -75,4 +84,4 @@ federation.setActorDispatcher("/users/{identifier}", async (context, identifier)
 
 // Even though this is basically a read-only server
 // We still must supply an inbox listener for the remote server to send us objects
-federation.setInboxListeners("/users/{identifier}/inbox", "/inbox")
+federation.setInboxListeners("/users/{identifier}/inbox", "/inbox");
