@@ -24,7 +24,9 @@ export default async function Page({
     await // TODO: Set up environment variables for the domain
     (
       await fetch(
-        `https://basic-fediverse-reader.app/api/post/${encodeURI(postUrl)}`
+        `https://basic-fediverse-reader.vercel.app/api/post/${encodeURI(
+          postUrl
+        )}`
       )
     ).json();
 
