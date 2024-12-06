@@ -1,4 +1,4 @@
-import { fetchPost, fetchTestPost } from "@/util/fetchPost";
+import { fetchPost } from "@/util/fetchPost";
 import { Document as ASDocument } from "@fedify/fedify/vocab";
 
 export async function GET(
