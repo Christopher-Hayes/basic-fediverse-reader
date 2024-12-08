@@ -31,8 +31,8 @@ export default function Nav() {
   };
 
   return (
-    <nav className="relative w-full py-4 sm:py-8 px-4">
-      <NavBg className="hidden sm:block absolute -mt-4 z-0 w-full h-full transform scale-[200%] -translate-x-4" />
+    <nav className="relative w-full flex justify-center py-4 sm:py-8 px-4">
+      <NavBg className="hidden sm:block absolute -mt-4 z-0 h-full transform scale-[200%] -translate-x-4" />
       <div className="relative z-10 flex justify-center items-center gap-12">
         <div className="group/input relative px-8 w-full max-w-80">
           <InputBg className="absolute text-bg-darker group-hover/input:text-highlight group-focus-within/input:text-highlight mt-1 -ml-5 z-10 w-full" />
