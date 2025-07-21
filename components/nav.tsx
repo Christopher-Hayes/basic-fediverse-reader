@@ -4,12 +4,13 @@ import InputBg from "@/public/nav-input-bg.svg";
 import InputBorder from "@/public/nav-input-border.svg";
 import SubmitBg from "@/public/nav-submit-bg.svg";
 import SubmitBorder from "@/public/nav-submit-border.svg";
+import { parseFediverseUrl } from "@/util/helpers";
 
 // Nav react component
 export default function Nav() {
   const handleSubmit = () => {
     const input = document.getElementById(
-      "fediverse-url-input"
+      "fediverse-url-input",
     ) as HTMLInputElement;
     let url = input.value;
 
@@ -19,8 +20,21 @@ export default function Nav() {
     }
 
     if (url) {
-      url = url.replace("https://", "").replace("http://", "");
-      window.location.href = `/post/${url}`;
+      const parsed = parseFediverseUrl(url);
+
+      if (parsed) {
+        if (parsed.type === "profile") {
+          // Navigate to profile page using the parsed handle path
+          window.location.href = `/profile/${parsed.path}`;
+        } else {
+          // Navigate to post page (existing behavior)
+          window.location.href = `/post/${parsed.path}`;
+        }
+      } else {
+        // Fallback to existing behavior
+        url = url.replace("https://", "").replace("http://", "");
+        window.location.href = `/post/${url}`;
+      }
     }
   };
 
@@ -40,7 +54,7 @@ export default function Nav() {
           <input
             id="fediverse-url-input"
             type="url"
-            placeholder="https://fosstodon.org/@chris_hayes/113585246591456543"
+            placeholder="https://floss.social/@chris or post URL"
             className="p-4 relative z-20 w-full bg-transparent outline-none text-fg placeholder-fg-muted text-ellipsis"
             onKeyUp={handleKeyUp}
           />

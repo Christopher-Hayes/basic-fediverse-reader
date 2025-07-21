@@ -27,15 +27,20 @@ export default async function ProfilePage({
   }
 
   // Ensure handle has proper format @username@server.com
-  if (handle.split("@").length === 2) {
-    // If just @username, we need to extract from URL or handle differently
-    // For now, return error state
-    console.error("Invalid handle format, need @username@server.com");
+  const parts = handle.split("@");
+  if (parts.length !== 3 || !parts[1] || !parts[2]) {
+    // Invalid format - should be @username@server.com which splits into ["", "username", "server.com"]
+    console.error(
+      "Invalid handle format, need @username@server.com, got:",
+      handle,
+    );
     return (
       <div className="min-h-screen flex flex-col">
         <Nav />
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-xl text-fg-muted">Invalid profile handle format</p>
+          <p className="text-xl text-fg-muted">
+            Invalid profile handle format. Expected: @username@server.com
+          </p>
         </div>
       </div>
     );
