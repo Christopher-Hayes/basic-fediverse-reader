@@ -1,8 +1,16 @@
 # Basic Fediverse Reader
 
-A simple reader for reading posts from the fediverse. Built with Fedify, Next.js, React, and Tailwind.
+A simple reader for viewing posts and profiles from the fediverse. Built with Fedify, Next.js, React, and Tailwind.
 
-This project is personal learning project on example for a simple next.js app to fetch Fediverse posts with Fedify. I would not consider the code production-ready.
+This project is a personal learning project showcasing a simple Next.js app to fetch Fediverse posts and profiles with Fedify. The application now supports both post URLs and profile URLs, allowing users to view individual posts or browse user profiles with their recent posts. I would not consider the code production-ready.
+
+## Features
+
+- **Post Viewing**: View individual fediverse posts with rich formatting, hashtag highlighting, and author information
+- **Profile Viewing**: Browse user profiles and their recent posts from across the fediverse
+- **Multi-Platform Support**: Works with various fediverse platforms (Mastodon, Pixelfed, etc.)
+- **Smart URL Detection**: Automatically detects whether input is a post URL or profile URL
+- **ActivityPub Integration**: Uses Fedify for proper ActivityPub protocol implementation
 
 ## Table of Contents
 
@@ -36,12 +44,30 @@ To use the Basic Fediverse Reader, you can run different scripts provided in the
   npm run lint
   ```
 
+### Using the Application
+
+1. **View Posts**: Enter any fediverse post URL (e.g., `https://mastodon.social/@user/123456789`) in the input field
+2. **View Profiles**: Enter any fediverse profile URL (e.g., `https://floss.social/@chris`) to view user profiles and recent posts
+3. **Supported URL Formats**:
+   - Post URLs: `server.com/@username/postid`, `server.com/notes/abc123`
+   - Profile URLs: `server.com/@username`, `server.com/users/username`
+   - Works with elk.zone URLs and other common formats
+
 ## Project Overview
 
 Here is a brief overview of important files and folders in the project:
 
 - The React code is mainly in the /app and /components folders.
-  - `post/[...postUrl]` - This is the main page for viewing posts.
-  - `[fedify]/[[...catchAll]]` - Allows this app to run as an ActivityPub sever.
-- `/util` has federation setup, post fetching, utility functions.
-- `/public` has the bulk of the SVGs used.
+  - `post/[...postUrl]` - Main page for viewing individual fediverse posts.
+  - `profile/[...userHandle]` - Profile pages for viewing user profiles and recent posts.
+  - `[fedify]/[[...catchAll]]` - Allows this app to run as an ActivityPub server.
+- `/components` contains reusable UI components:
+  - `nav.tsx` - Smart URL input that handles both post and profile URLs
+  - `toot.tsx` - Post display component with rich formatting
+  - `profileHeader.tsx` - User profile header display
+  - `tootCard.tsx` & `tootCardFull.tsx` - Post cards for different layouts
+- `/util` has federation setup, post/profile fetching, and utility functions:
+  - `federation.ts` - Fedify setup and ActivityPub configuration
+  - `fetchPost.ts` - Logic for fetching posts and user data from ActivityPub
+  - `helpers.ts` - URL parsing and utility functions
+- `/public` has the bulk of the custom SVGs used throughout the interface.

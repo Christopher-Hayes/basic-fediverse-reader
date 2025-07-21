@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Basic Fediverse Reader is a simple reader application for viewing posts from the fediverse (ActivityPub network). Built with Next.js, React, TypeScript, and Tailwind CSS, it uses Fedify for ActivityPub protocol integration. The app allows users to input a fediverse post URL and displays the post with rich formatting, hashtag highlighting, and author information. This is a personal learning project demonstrating ActivityPub integration and is not considered production-ready.
+Basic Fediverse Reader is a simple reader application for viewing posts and profiles from the fediverse (ActivityPub network). Built with Next.js, React, TypeScript, and Tailwind CSS, it uses Fedify for ActivityPub protocol integration. The app allows users to input either fediverse post URLs or profile URLs, automatically detecting the type and displaying posts with rich formatting, hashtag highlighting, and author information, or showing user profiles with recent posts. This is a personal learning project demonstrating ActivityPub integration and is not considered production-ready.
 
 ## Technology Stack
 
@@ -34,21 +34,25 @@ app/
 ├── [fedify]/                   # ActivityPub federation routes
 │   └── [[...catchAll]]/        # Catch-all route handler
 ├── post/[...postUrl]/          # Dynamic post viewing pages
+├── profile/[...userHandle]/    # Dynamic profile viewing pages
 ├── fonts/                      # Custom font assets
 ├── globals.css                 # Global styles and CSS variables
 ├── layout.tsx                  # Root layout with font loading
 └── page.tsx                    # Homepage with navigation
 
 components/
-├── nav.tsx                     # URL input navigation component
+├── nav.tsx                     # Smart URL input component (posts & profiles)
 ├── toot.tsx                    # Main post display component
 ├── tootAuthor.tsx              # Author information display
+├── tootCard.tsx                # Compact post card component
+├── tootCardFull.tsx            # Full post card component
+├── profileHeader.tsx           # Profile header display component
 └── tagList.tsx                 # Hashtag rendering component
 
 util/
 ├── federation.ts               # Fedify setup and instance actor
-├── fetchPost.ts                # ActivityPub post fetching logic
-└── helpers.ts                  # Utility functions
+├── fetchPost.ts                # ActivityPub post and profile fetching logic
+└── helpers.ts                  # URL parsing and utility functions
 
 public/                         # SVG assets and graphics
 └── [extensive SVG collection]  # Custom illustrations and UI elements
@@ -105,8 +109,9 @@ const avatarUrl = icon?.url?.toString();
 ```
 
 ### Post Fetching Architecture
-- **URL Processing** - Handles various fediverse URL formats (elk.zone, Flipboard, etc.)
+- **URL Processing** - Handles various fediverse URL formats (elk.zone, Flipboard, etc.) and automatically detects post vs profile URLs
 - **ActivityPub Object Lookup** - Fetches Notes (posts) and Actors (users) from remote servers
+- **Profile Data Fetching** - Retrieves user profiles and their recent posts from outboxes via collection traversal
 - **Content Parsing** - Safely parses HTML content from posts
 - **Attachment Processing** - Handles images and media attachments
 - **Local Testing** - Can save/load posts locally via `post.json` for development
@@ -139,7 +144,7 @@ const avatarUrl = icon?.url?.toString();
 - Always handle ActivityPub object resolution errors gracefully
 - Implement proper content sanitization when parsing HTML
 - Use the instance actor for server identification
-- Handle various fediverse URL formats and edge cases
+- Handle various fediverse URL formats and edge cases for both posts and profiles
 - Implement caching strategies for production deployments
 
 ### Fedify Development Best Practices
@@ -158,10 +163,11 @@ const avatarUrl = icon?.url?.toString();
 ## Key Components & Features
 
 ### Navigation (`nav.tsx`)
-- URL input field with fediverse post URL validation
+- Smart URL input field that automatically detects post URLs vs profile URLs
+- Supports various fediverse URL formats (Mastodon, elk.zone, etc.)
 - Creative SVG-based styling with hover effects
 - Enter key and button submission handling
-- Automatic URL processing and redirection to post pages
+- Automatic URL processing and redirection to appropriate post or profile pages
 
 ### Post Display (`toot.tsx`)
 - HTML content parsing with custom link and hashtag rendering
@@ -173,6 +179,12 @@ const avatarUrl = icon?.url?.toString();
 - ActivityPub Actor display with avatar and metadata
 - Custom clip-path styling for creative avatar shapes
 - Responsive design for mobile and desktop views
+
+### Profile Header (`profileHeader.tsx`)
+- Displays user profile information including avatar, name, and bio
+- Handles various ActivityPub Actor properties
+- Integrates with creative SVG styling system
+- Responsive layout for mobile and desktop
 
 ### Federation Route (`[fedify]/[[...catchAll]]/route.ts`)
 - Handles all ActivityPub federation requests
@@ -190,7 +202,7 @@ const avatarUrl = icon?.url?.toString();
 ### Development Workflow
 - Use `fetchTestPost()` instead of `fetchPost()` for local testing
 - Save posts locally with `saveNoteLocally()` function for debugging
-- Test with various fediverse URLs to ensure broad compatibility
+- Test with various fediverse URLs (both posts and profiles) to ensure broad compatibility
 
 ## Environment Configuration
 
@@ -202,6 +214,40 @@ const avatarUrl = icon?.url?.toString();
 - Uses memory-based KV store (not persistent)
 - No database required for basic functionality
 - Can operate offline with locally saved test data
+
+## URL Processing & Detection
+
+### Smart URL Parsing (`helpers.ts`)
+The application includes intelligent URL parsing that can differentiate between post URLs and profile URLs:
+
+```typescript
+import { parseFediverseUrl } from "@/util/helpers";
+
+// Parse any fediverse URL
+const parsed = parseFediverseUrl("https://floss.social/@chris");
+// Returns: { type: 'profile', path: 'chris@floss.social', handle: '@chris@floss.social' }
+
+const postParsed = parseFediverseUrl("https://mastodon.social/@user/123456789");
+// Returns: { type: 'post', path: 'mastodon.social/@user/123456789' }
+```
+
+### URL Detection Logic
+- **Profile URLs**: Detects formats like `server.com/@username`, `server.com/users/username`
+- **Post URLs**: Detects long numeric IDs, `/notes/`, `/status/`, `/objects/` paths
+- **URL Cleaning**: Removes protocols, handles elk.zone prefixes, Flipboard suffixes
+- **Fallback Behavior**: Defaults to post URL if type cannot be determined
+
+### Navigation Integration
+The navigation component uses this parsing to automatically route users to the correct page type:
+
+```typescript
+const parsed = parseFediverseUrl(userInput);
+if (parsed?.type === 'profile') {
+  window.location.href = `/profile/${parsed.path}`;
+} else {
+  window.location.href = `/post/${parsed.path}`;
+}
+```
 
 ## Common Patterns
 
@@ -233,6 +279,26 @@ for await (const activity of context.traverseCollection(outbox, { documentLoader
     }
   }
 }
+```
+
+### User Profile and Posts Fetching
+```tsx
+// Fetch user profile and recent posts using the helper function
+const recentPosts = await fetchUserPosts("@username@server.com", 6);
+
+// Fetch actor information separately for profile display
+const actor = await lookupObject("@username@server.com", { documentLoader }) as Actor;
+const icon = await actor.getIcon({ documentLoader });
+
+// Convert to simple types for component props
+const simpleActor = {
+  id: actor.id?.toString(),
+  name: actor.name,
+  preferredUsername: actor.preferredUsername,
+  url: actor.url?.toString(),
+  avatarUrl: icon?.url?.toString(),
+  summary: actor.summary?.toString(),
+};
 ```
 
 ### Avatar Handling Pattern
@@ -360,6 +426,8 @@ for await (const activity of context.traverseCollection(outbox, { documentLoader
 - Test with various fediverse platforms (Mastodon, Pixelfed, etc.)
 - Validate different post formats and content types
 - Test federation functionality with real ActivityPub servers
+- Test both post URL and profile URL parsing and handling
+- Verify profile page rendering with various user account types
 
 ## Remember
 - This is a learning project, not production-ready code
@@ -377,3 +445,5 @@ for await (const activity of context.traverseCollection(outbox, { documentLoader
 - **Error Resilience**: ActivityPub federation can fail in many ways - always have fallbacks and continue processing other items
 - **Documentation**: Fedify's docs at https://fedify.dev/reference/ are essential, especially Context API and vocabulary sections
 - **Real Data vs Sample Data**: Always prefer real ActivityPub data over mock data - the protocol has nuances that samples miss
+- **URL Detection**: Smart URL parsing enables dual functionality (posts + profiles) while maintaining backward compatibility
+- **Profile Data Architecture**: User profiles require both Actor lookup and outbox traversal for complete functionality
