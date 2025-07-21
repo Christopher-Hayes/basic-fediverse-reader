@@ -40,6 +40,38 @@ Uses clipPath of an SVG embedded in the page (because external SVGs do not work 
   clip-path: url('#avatarClipPath');
 }
 
+/* 
+Profile avatar clip path for larger avatars (120px+) - uses CSS polygon that scales properly
+Creates an organic, hand-drawn style border that matches the design aesthetic
+*/
+.profile-avatar-clip {
+  clip-path: polygon(
+    5% 15%, 
+    10% 5%, 
+    25% 2%, 
+    40% 8%, 
+    55% 3%, 
+    70% 7%, 
+    85% 12%, 
+    95% 25%, 
+    98% 40%, 
+    93% 55%, 
+    97% 70%, 
+    92% 80%, 
+    85% 90%, 
+    75% 95%, 
+    60% 98%, 
+    45% 93%, 
+    30% 97%, 
+    18% 92%, 
+    8% 85%, 
+    3% 70%, 
+    7% 55%, 
+    2% 40%, 
+    8% 25%
+  );
+}
+
 /* Fun pop in animation using scale */
 @keyframes popIn {
   0% {

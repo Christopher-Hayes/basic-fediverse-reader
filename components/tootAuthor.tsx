@@ -42,7 +42,7 @@ export default async function TootAuthor({
   const server = `@${
     typeof person.url === "string"
       ? new URL(person.url).host
-      : (person.url as URL)?.host ?? ""
+      : ((person.url as URL)?.host ?? "")
   }`;
   const fullIdentifier = `${username}${server}`;
   const HIGHLIGHT_PATH_LENGTH = 708;
@@ -64,8 +64,7 @@ export default async function TootAuthor({
             <span className="relative z-30 mr-2">BY</span>
             <a
               className="relative z-30 peer text-fg text-xl hover:underline focus:underline decoration-2 underline-offset-4 outline-none"
-              href={person.url?.toString()}
-              target="_blank"
+              href={`/profile/${encodeURIComponent(fullIdentifier)}`}
               rel="noopener noreferrer"
             >
               {person.name?.toString()}
@@ -118,8 +117,7 @@ export default async function TootAuthor({
           <span className="relative z-30 mr-2 text-fg-muted">BY</span>
           <a
             className="relative z-30 peer text-fg sm:text-xl hover:underline focus:underline decoration-2 underline-offset-4 outline-none"
-            href={person.url?.toString()}
-            target="_blank"
+            href={`/profile/${encodeURIComponent(fullIdentifier)}`}
             rel="noopener noreferrer"
           >
             {person.name?.toString()}

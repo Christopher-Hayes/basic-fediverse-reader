@@ -10,25 +10,26 @@ import parse, {
 import { Temporal } from "@js-temporal/polyfill";
 import { timeSince } from "@/util/helpers";
 import Image from "next/image";
+import Link from "next/link";
 
 // Simple types for the card component
 type SimplePost = {
-  id?: string; // Use string instead of URL to avoid serialization issues
+  id?: string;
   content?: unknown;
   published?: Date;
-  url?: string; // Use string instead of URL to avoid serialization issues
+  url?: string;
 };
 
 type SimpleActor = {
-  id?: string; // Use string instead of URL to avoid serialization issues
+  id?: string;
   name?: unknown;
   preferredUsername?: unknown;
-  url?: string; // Use string instead of URL to avoid serialization issues
-  avatarUrl?: string; // Pre-resolved avatar URL instead of async function
+  url?: string;
+  avatarUrl?: string;
 };
 
-// Simplified link component for cards
-function CardLink({
+// Full content link component
+function FullCardLink({
   children,
   href,
 }: {
@@ -47,8 +48,8 @@ function CardLink({
   );
 }
 
-// Condensed toot card component for displaying in lists
-export default function TootCard({
+// Full post card component for displaying complete posts in profile
+export default function TootCardFull({
   post,
   author,
 }: {
@@ -70,7 +71,7 @@ export default function TootCard({
   const server = typeof author.url === "string" ? new URL(author.url).host : "";
   const fullIdentifier = `${username}@${server}`;
 
-  // Options for parsing HTML content with simplified styling
+  // Options for parsing HTML content with full styling
   const options: HTMLReactParserOptions = {};
   options.replace = (domNode: DOMNode, index: number) => {
     if (domNode instanceof Element) {
@@ -78,16 +79,18 @@ export default function TootCard({
 
       if (attribs && tagName === "a") {
         return (
-          <CardLink key={index} href={attribs.href}>
+          <FullCardLink key={index} href={attribs.href}>
             {domToReact(children as DOMNode[], options)}
-          </CardLink>
+          </FullCardLink>
         );
       } else if (tagName === "p") {
         return (
-          <p className="mb-2 text-sm leading-relaxed">
+          <p key={index} className="mb-3 leading-relaxed">
             {domToReact(children as DOMNode[], options)}
           </p>
         );
+      } else if (tagName === "br") {
+        return <br key={index} />;
       }
     } else if (domNode instanceof Text) {
       return <span>{domNode.data}</span>;
@@ -98,21 +101,15 @@ export default function TootCard({
   const contentsReact = parse(contentHtml, options);
 
   // Generate the correct URL format for the post route
-  // Convert https://floss.social/@chris/111234567890123456 to floss.social/@chris/111234567890123456
   const generatePostUrl = (url: string | undefined) => {
     if (!url) {
       return "";
     }
 
     try {
-      // Ensure we have a proper URL object
       const postUrl = new URL(url);
-
-      // Remove the protocol and construct the path
       const host = postUrl.host;
       const pathname = postUrl.pathname;
-
-      // Format: /post/server/@username/postid
       return `/post/${host}${pathname}`;
     } catch (error) {
       console.error("Error generating post URL:", error, "from URL:", url);
@@ -121,16 +118,16 @@ export default function TootCard({
   };
 
   return (
-    <article className="bg-bg-lighter border border-bg-darker rounded-lg p-4 max-w-sm flex flex-col gap-3 hover:shadow-md transition-shadow duration-200">
+    <article className="bg-bg-lighter border-2 border-bg-darker rounded-lg p-6 break-inside-avoid mb-6 hover:shadow-lg transition-all duration-200 hover:border-highlight">
       {/* Author header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full overflow-hidden bg-bg-darker flex-shrink-0">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-12 h-12 rounded-full overflow-hidden bg-bg-darker flex-shrink-0">
           {author.avatarUrl ? (
             <Image
               src={author.avatarUrl}
               alt={`${author.name?.toString() ?? "User"} avatar`}
-              width={40}
-              height={40}
+              width={48}
+              height={48}
               className="w-full h-full object-cover"
             />
           ) : (
@@ -138,42 +135,48 @@ export default function TootCard({
           )}
         </div>
         <div className="flex-grow min-w-0">
-          <div className="flex items-center gap-1">
-            <a
+          <div className="flex items-center gap-2">
+            <Link
               href={`/profile/${encodeURIComponent(fullIdentifier)}`}
-              className="font-medium text-fg hover:text-amber-700 focus:text-amber-700 outline-none truncate"
+              className="font-semibold text-fg hover:text-amber-700 focus:text-amber-700 outline-none truncate"
             >
               {author.name?.toString()}
+            </Link>
+            <span className="text-fg-muted">·</span>
+            <a
+              href={post.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-fg-muted hover:text-fg focus:text-fg outline-none flex-shrink-0"
+            >
+              {timeSinceString}
             </a>
           </div>
-          <p className="text-xs text-fg-muted truncate">{fullIdentifier}</p>
-        </div>
-        <a
-          href={post.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-fg-muted hover:text-fg focus:text-fg outline-none flex-shrink-0"
-        >
-          {timeSinceString}
-        </a>
-      </div>
-
-      {/* Content */}
-      <div className="text-fg leading-relaxed overflow-hidden">
-        <div className="relative max-h-20 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-bg-lighter z-10 pointer-events-none"></div>
-          {contentsReact}
+          <p className="text-sm text-fg-muted truncate">{fullIdentifier}</p>
         </div>
       </div>
 
-      {/* View post link */}
-      <div className="mt-auto pt-2 border-t border-bg-darker">
-        <a
+      {/* Full Content */}
+      <div className="text-fg leading-relaxed mb-4">{contentsReact}</div>
+
+      {/* Action footer */}
+      <div className="pt-3 border-t border-bg-darker flex justify-between items-center">
+        <Link
           href={generatePostUrl(post.url)}
-          className="text-xs text-amber-700 hover:text-amber-900 focus:text-amber-900 hover:underline focus:underline outline-none"
+          className="text-sm text-amber-700 hover:text-amber-900 focus:text-amber-900 hover:underline focus:underline outline-none"
         >
-          View full post →
-        </a>
+          View detailed post →
+        </Link>
+        {post.url && (
+          <a
+            href={post.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-fg-muted hover:text-fg focus:text-fg outline-none"
+          >
+            View on {server}
+          </a>
+        )}
       </div>
     </article>
   );
