@@ -17,6 +17,7 @@ const documentLoader = await context.getDocumentLoader({
 
 // Save locally for testing (and to avoid spamming servers)
 // "Note" is ActivityPub speak for "Mastodon Post"
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function saveNoteLocally(post: Note | null, author: Actor | null) {
   fs.writeFileSync(
     "post.json",
