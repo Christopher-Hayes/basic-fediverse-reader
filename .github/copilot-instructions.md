@@ -61,12 +61,56 @@ public/                         # SVG assets and graphics
 - **Memory KV Store** - Temporary storage for development (should be replaced in production)
 - **Dynamic Route Handling** - `/[fedify]/[[...catchAll]]/` handles all ActivityPub requests
 
+### Fedify Framework Deep Dive
+- **Documentation**: Primary docs at https://fedify.dev/reference/, especially the Context API and vocabulary sections
+- **Collection Traversal**: Use `ctx.traverseCollection()` to iterate through ActivityPub collections like outboxes
+  - Pattern: `for await (const activity of ctx.traverseCollection(outbox, { documentLoader }))`
+  - Always handle errors gracefully as remote servers may be unreachable or return malformed data
+- **Object Lookup**: Use `lookupObject()` with handles (@user@server.com) or URLs
+  - Example: `lookupObject("@chris@floss.social", { documentLoader })`
+  - Can fetch Actors, Notes, and other ActivityPub objects
+- **Async Property Access**: Many Fedify objects require async access to properties
+  - Example: `await actor.getIcon({ documentLoader })` for avatars
+  - Example: `await actor.getOutbox({ documentLoader })` for user's outbox
+- **Type Safety**: Import specific vocab types (`Actor`, `Note`, `Create`, etc.) from `@fedify/fedify/vocab`
+- **Document Loader Context**: Always pass `{ documentLoader }` to async methods for proper federation
+
+### ActivityPub Vocabulary Understanding
+- **Actor**: Represents users/accounts (Person, Application, etc.)
+- **Note**: Represents posts/toots/messages
+- **Create**: Activity type that wraps Notes when posted
+- **Collection**: Ordered lists like outboxes, followers, following
+- **Outbox**: Collection of activities (Create, Announce, etc.) from an actor
+- **Object Properties**: URLs in ActivityPub are URL objects, need `.toString()` for strings
+- **Content Serialization**: Convert Fedify objects to simple types for Next.js serialization between server/client
+
+### Real ActivityPub Data Fetching Patterns
+```typescript
+// Fetch user posts from outbox
+const actor = await lookupObject(handle, { documentLoader }) as Actor;
+const outbox = await actor.getOutbox({ documentLoader });
+
+for await (const activity of context.traverseCollection(outbox, { documentLoader })) {
+  if (activity instanceof Create) {
+    const note = await activity.getObject({ documentLoader });
+    if (note instanceof Note) {
+      // Process the post
+    }
+  }
+}
+
+// Get avatar URL
+const icon = await actor.getIcon({ documentLoader });
+const avatarUrl = icon?.url?.toString();
+```
+
 ### Post Fetching Architecture
 - **URL Processing** - Handles various fediverse URL formats (elk.zone, Flipboard, etc.)
 - **ActivityPub Object Lookup** - Fetches Notes (posts) and Actors (users) from remote servers
 - **Content Parsing** - Safely parses HTML content from posts
 - **Attachment Processing** - Handles images and media attachments
 - **Local Testing** - Can save/load posts locally via `post.json` for development
+- **Type Conversion** - Convert complex Fedify objects to simple serializable types for components
 
 ## Development Guidelines
 
@@ -97,6 +141,19 @@ public/                         # SVG assets and graphics
 - Use the instance actor for server identification
 - Handle various fediverse URL formats and edge cases
 - Implement caching strategies for production deployments
+
+### Fedify Development Best Practices
+- Always handle ActivityPub lookup failures gracefully
+- Implement proper TypeScript error types  
+- Provide meaningful fallbacks for missing content
+- Log errors for debugging while avoiding user-facing crashes
+- Handle various edge cases in URL processing
+- Always pass `{ documentLoader }` to async Fedify methods
+- Use `instanceof` checks for ActivityPub vocabulary objects (Note, Actor, Create)
+- Convert Fedify objects to simple types for Next.js server/client serialization
+- Handle avatar fetching with `await actor.getIcon({ documentLoader })`
+- Test with various fediverse platforms (Mastodon, Pixelfed, etc.)
+- Validate different post formats and content types
 
 ## Key Components & Features
 
@@ -161,6 +218,55 @@ if (!post) {
 const contentHtml = post?.content?.toString() ?? "";
 ```
 
+### Collection Traversal for User Posts
+```tsx
+// Fetch recent posts from a user's outbox using real ActivityPub data
+const actor = await lookupObject("@username@server.com", { documentLoader }) as Actor;
+const outbox = await actor.getOutbox({ documentLoader });
+
+const posts = [];
+for await (const activity of context.traverseCollection(outbox, { documentLoader })) {
+  if (activity instanceof Create) {
+    const note = await activity.getObject({ documentLoader });
+    if (note instanceof Note) {
+      posts.push({ post: note, author: actor });
+    }
+  }
+}
+```
+
+### Avatar Handling Pattern
+```tsx
+// Fetch avatar URL from actor
+const icon = await actor.getIcon({ documentLoader });
+const avatarUrl = icon?.url?.toString();
+
+// Convert to simple types for serialization between server/client
+const simpleActor = {
+  name: actor.name,
+  avatarUrl: icon?.url?.toString(),
+  // ... other properties
+};
+```
+
+### Type Conversion for Next.js Serialization
+```tsx
+// Convert complex Fedify objects to simple serializable types
+function convertToSimpleTypes(posts: Array<{ post: Note; author: Actor }>) {
+  return posts.map(({ post, author }) => ({
+    post: {
+      id: post.id?.toString(),
+      content: post.content,
+      published: post.published ? new Date(post.published.toString()) : undefined,
+    },
+    author: {
+      name: author.name,
+      url: author.url?.toString(),
+    },
+  }));
+}
+```
+
 ### Custom SVG Integration
 ```tsx
 import MySvg from "@/public/my-svg.svg";
@@ -220,6 +326,34 @@ const options: HTMLReactParserOptions = {
 - Provide meaningful fallbacks for missing content
 - Log errors for debugging while avoiding user-facing crashes
 - Handle various edge cases in URL processing
+- Use try-catch blocks around all ActivityPub operations
+- Handle network timeouts and server unavailability
+- Gracefully handle malformed ActivityPub responses
+- Return empty arrays or null values rather than throwing errors to UI
+- Log detailed error information for debugging while showing user-friendly messages
+
+## ActivityPub-Specific Error Patterns
+```tsx
+// Always wrap ActivityPub calls in try-catch
+try {
+  const actor = await lookupObject(handle, { documentLoader }) as Actor;
+  const outbox = await actor.getOutbox({ documentLoader });
+  // Process outbox...
+} catch (error) {
+  console.error("ActivityPub lookup failed:", error);
+  return []; // Return empty array instead of throwing
+}
+
+// Handle individual activity processing errors
+for await (const activity of context.traverseCollection(outbox, { documentLoader })) {
+  try {
+    // Process activity...
+  } catch (error) {
+    console.warn("Error processing activity:", error);
+    continue; // Skip this activity, continue with next
+  }
+}
+```
 
 ## Testing Approach
 - Use local post saving/loading for development testing
@@ -235,3 +369,11 @@ const options: HTMLReactParserOptions = {
 - Focus on proper ActivityPub protocol implementation
 - Consider performance implications of real-time federation requests
 - Implement proper content security when parsing remote HTML content
+
+## Key Lessons from Real Implementation
+- **Collection Traversal is the Key**: Use `context.traverseCollection()` to fetch user posts from outboxes rather than trying to construct URLs
+- **Avatar Fetching**: Use `await actor.getIcon({ documentLoader })` pattern, always include documentLoader context
+- **Type Serialization**: Convert complex Fedify objects to simple types for Next.js server/client boundaries
+- **Error Resilience**: ActivityPub federation can fail in many ways - always have fallbacks and continue processing other items
+- **Documentation**: Fedify's docs at https://fedify.dev/reference/ are essential, especially Context API and vocabulary sections
+- **Real Data vs Sample Data**: Always prefer real ActivityPub data over mock data - the protocol has nuances that samples miss

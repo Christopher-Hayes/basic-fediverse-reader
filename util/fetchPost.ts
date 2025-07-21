@@ -8,8 +8,56 @@ import {
   Person,
   Note,
   Actor,
+  Create,
 } from "@fedify/fedify/vocab";
 import fs from "fs";
+// Simple types for the card component
+export type SimplePost = {
+  id?: string;
+  content?: unknown;
+  published?: Date;
+  url?: string;
+};
+
+export type SimpleActor = {
+  id?: string;
+  name?: unknown;
+  preferredUsername?: unknown;
+  url?: string;
+  avatarUrl?: string;
+};
+
+// Convert Fedify objects to simple types for serialization
+async function convertToSimpleTypes(
+  posts: Array<{ post: Note; author: Actor }>,
+): Promise<Array<{ post: SimplePost; author: SimpleActor }>> {
+  const convertedPosts = await Promise.all(
+    posts.map(async ({ post, author }) => {
+      // Fetch the author's icon/avatar
+      const icon = await author.getIcon({ documentLoader });
+
+      return {
+        post: {
+          id: post.id?.toString(),
+          content: post.content,
+          published: post.published
+            ? new Date(post.published.toString())
+            : undefined,
+          url: post.url?.toString(),
+        },
+        author: {
+          id: author.id?.toString(),
+          name: author.name,
+          preferredUsername: author.preferredUsername,
+          url: author.url?.toString(),
+          avatarUrl: icon?.url?.toString(),
+        },
+      };
+    }),
+  );
+
+  return convertedPosts;
+}
 
 const documentLoader = await context.getDocumentLoader({
   identifier: INSTANCE_ACTOR,
@@ -27,8 +75,8 @@ async function saveNoteLocally(post: Note | null, author: Actor | null) {
         author: await author?.toJsonLd({ format: "expand" }),
       },
       null,
-      2
-    )
+      2,
+    ),
   );
 }
 
@@ -87,7 +135,7 @@ export async function fetchPost(identifier: string) {
       const attachmentsPromise = new Promise(async (resolve) => {
         for await (const attachment of post.getAttachments()) {
           attachments.push(
-            attachment as unknown as ASObject & Link & PropertyValue
+            attachment as unknown as ASObject & Link & PropertyValue,
           );
         }
         resolve(attachments);
@@ -107,7 +155,7 @@ export async function fetchPost(identifier: string) {
           `https://${serverDomain}/users/${username}`,
           {
             documentLoader,
-          }
+          },
         )) as Actor | null;
       }
     }
@@ -125,5 +173,78 @@ export async function fetchPost(identifier: string) {
       post: null,
       author: null,
     };
+  }
+}
+
+// Fetch recent posts from a user's outbox
+export async function fetchUserPosts(
+  handle: string,
+  limit: number = 3,
+): Promise<Array<{ post: SimplePost; author: SimpleActor }>> {
+  try {
+    // Parse the handle @username@server.com
+    const match = handle.match(/@([^@]+)@(.+)/);
+    if (!match) {
+      console.error("Invalid handle format");
+      return [];
+    }
+
+    // Look up the actor using the handle
+    const actor = (await lookupObject(handle, {
+      documentLoader,
+    })) as Actor | null;
+
+    if (!actor) {
+      console.error("Could not fetch user");
+      return [];
+    }
+
+    console.log(`Found actor: ${actor.name?.toString()} (${handle})`);
+
+    // Get the actor's outbox
+    const outbox = await actor.getOutbox({ documentLoader });
+    if (!outbox) {
+      console.error("Could not fetch outbox");
+      return [];
+    }
+
+    console.log(`Found outbox, traversing for recent posts...`);
+
+    // Traverse the outbox collection to get recent posts
+    const posts: Array<{ post: Note; author: Actor }> = [];
+    let count = 0;
+
+    for await (const activity of context.traverseCollection(outbox, {
+      documentLoader,
+    })) {
+      if (count >= limit) break;
+
+      // We're looking for Create activities that contain Note objects
+      if (activity instanceof Create) {
+        try {
+          const note = await (activity as Create).getObject({ documentLoader });
+
+          if (note instanceof Note) {
+            posts.push({
+              post: note,
+              author: actor,
+            });
+            count++;
+            console.log(
+              `Found post ${count}: ${note.content?.toString()?.substring(0, 50)}...`,
+            );
+          }
+        } catch (error) {
+          console.warn("Error processing activity:", error);
+          continue;
+        }
+      }
+    }
+
+    console.log(`Successfully fetched ${posts.length} posts from ${handle}`);
+    return await convertToSimpleTypes(posts);
+  } catch (error) {
+    console.error("Error fetching user posts:", error);
+    return [];
   }
 }
