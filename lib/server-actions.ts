@@ -50,6 +50,59 @@ export async function fetchProfileData(
     const icon = await actor.getIcon({ documentLoader });
     const summary = actor.summary;
 
+    // Get additional actor metadata
+    let followersCount: number | undefined;
+    let followingCount: number | undefined;
+    let outboxCount: number | undefined;
+    let published: string | undefined;
+
+    try {
+      const followers = await actor.getFollowers({ documentLoader });
+      if (followers && followers.totalItems !== null) {
+        followersCount = followers.totalItems;
+      }
+    } catch (error) {
+      console.warn(
+        "Could not fetch followers count:",
+        error instanceof Error ? error.message : "Unknown error",
+      );
+    }
+
+    try {
+      const following = await actor.getFollowing({ documentLoader });
+      if (following && following.totalItems !== null) {
+        followingCount = following.totalItems;
+      }
+    } catch (error) {
+      console.warn(
+        "Could not fetch following count:",
+        error instanceof Error ? error.message : "Unknown error",
+      );
+    }
+
+    try {
+      const outbox = await actor.getOutbox({ documentLoader });
+      if (outbox && outbox.totalItems !== null) {
+        outboxCount = outbox.totalItems;
+      }
+    } catch (error) {
+      console.warn(
+        "Could not fetch outbox count:",
+        error instanceof Error ? error.message : "Unknown error",
+      );
+    }
+
+    try {
+      if (actor.published) {
+        published = actor.published.toString();
+      }
+    } catch (error) {
+      console.warn(
+        "Could not fetch published date:",
+        error instanceof Error ? error.message : "Unknown error",
+      );
+    }
+
     // Extract custom emojis from actor tags
     const actorTags: unknown[] = [];
     for await (const tag of actor.getTags()) {
@@ -66,6 +119,10 @@ export async function fetchProfileData(
       avatarUrl: icon?.url?.toString(),
       summary: summary?.toString(),
       emojis: actorEmojis,
+      followersCount,
+      followingCount,
+      outboxCount,
+      published,
     };
 
     return simpleActor;

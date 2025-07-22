@@ -14,6 +14,10 @@ export type SimpleActorProfile = {
   avatarUrl?: string;
   summary?: string;
   emojis?: CustomEmoji[];
+  followersCount?: number;
+  followingCount?: number;
+  outboxCount?: number;
+  published?: string;
 };
 
 export default function ProfileHeader({
@@ -97,6 +101,52 @@ export default function ProfileHeader({
                   View on{" "}
                   {actor.url ? new URL(actor.url).host : "original server"}
                 </a>
+              </div>
+            )}
+
+            {/* Profile metadata */}
+            {(actor.followersCount !== undefined ||
+              actor.followingCount !== undefined ||
+              actor.outboxCount !== undefined ||
+              actor.published) && (
+              <div className="mt-6 pt-4 border-t border-bg-darker">
+                <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-fg-muted">
+                  {actor.followersCount !== undefined && (
+                    <span className="flex items-center gap-1">
+                      <span className="text-fg font-medium">
+                        {actor.followersCount.toLocaleString()}
+                      </span>
+                      <span>Followers</span>
+                    </span>
+                  )}
+                  {actor.followingCount !== undefined && (
+                    <span className="flex items-center gap-1">
+                      <span className="text-fg font-medium">
+                        {actor.followingCount.toLocaleString()}
+                      </span>
+                      <span>Following</span>
+                    </span>
+                  )}
+                  {actor.outboxCount !== undefined && (
+                    <span className="flex items-center gap-1">
+                      <span className="text-fg font-medium">
+                        {actor.outboxCount.toLocaleString()}
+                      </span>
+                      <span>Posts</span>
+                    </span>
+                  )}
+                  {actor.published && (
+                    <span className="flex items-center gap-1">
+                      <span>Joined</span>
+                      <span className="text-fg font-medium">
+                        {new Date(actor.published).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                        })}
+                      </span>
+                    </span>
+                  )}
+                </div>
               </div>
             )}
           </div>

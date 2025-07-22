@@ -237,7 +237,7 @@ const emojis = await extractCustomEmojis(activityPubTags);
 ## Development Commands
 
 ### Primary Commands
-- `npm run dev` - Start development server
+- `npm run dev` - Start development server (**NOTE: Do not run this in chat - it's a never-ending command that will hang the session, just ask the user to do it.**)
 - `npm run build` - Build for production
 - `npm start` - Start production server
 - `npm run lint` - Run Biome linter and formatter
