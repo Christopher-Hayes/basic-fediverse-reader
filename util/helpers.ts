@@ -11,6 +11,18 @@ export type ParsedUrl = {
 export function parseFediverseUrl(input: string): ParsedUrl | null {
   let url = input.trim();
 
+  // Check if it's a fediverse handle format: @username@server.com
+  const handlePattern = /^@?([^@\s]+)@([^@\s]+\.[^@\s]+)$/;
+  const handleMatch = url.match(handlePattern);
+  if (handleMatch) {
+    const [, username, server] = handleMatch;
+    return {
+      type: "profile",
+      path: `${username}@${server}`,
+      handle: `@${username}@${server}`,
+    };
+  }
+
   // Remove protocol if present
   url = url.replace(/^https?:\/\//, "");
 

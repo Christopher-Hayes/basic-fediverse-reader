@@ -16,7 +16,7 @@ export default function Nav() {
 
     // Input field placeholder - use if user hits "GO" without entering a URL
     if (!url) {
-      url = "fosstodon.org/@chris_hayes/113585246591456543";
+      url = "@chris_hayes@fosstodon.org";
     }
 
     if (url) {
@@ -54,7 +54,7 @@ export default function Nav() {
           <input
             id="fediverse-url-input"
             type="url"
-            placeholder="https://floss.social/@chris or post URL"
+            placeholder="@chris@floss.social or post/profile URL"
             className="p-4 relative z-20 w-full bg-transparent outline-none text-fg placeholder-fg-muted text-ellipsis"
             onKeyUp={handleKeyUp}
           />

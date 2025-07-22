@@ -7,32 +7,6 @@ import { Actor, Note } from "@fedify/fedify/vocab";
 import AuthorHoverCloudBg from "@/public/author-hover-cloud-bg.svg";
 import AuthorIconMobileBg from "@/public/author-icon-mobile-bg.svg";
 import AuthorNameMobileBg from "@/public/author-name-mobile-bg.svg";
-import type { CustomEmoji } from "@/util/emoji";
-
-/**
- * Escape special regex characters in a string
- */
-function escapeRegExp(string: string): string {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-/**
- * Replace custom emoji shortcodes in text with HTML img tags
- */
-function replaceEmojisInText(text: string, emojis: CustomEmoji[]): string {
-  if (!emojis || emojis.length === 0) return text;
-
-  let processedText = text;
-  emojis.forEach((emoji) => {
-    const imgTag = `<img src="${emoji.url}" alt="${emoji.name}" title="${emoji.name}" class="inline-emoji" style="display: inline; height: 1.2em; width: auto; vertical-align: text-top; margin: 0 0.1em;" loading="lazy" />`;
-    processedText = processedText.replace(
-      new RegExp(escapeRegExp(emoji.name), "g"),
-      imgTag,
-    );
-  });
-
-  return processedText;
-}
 
 export default async function TootAuthor({
   post,
