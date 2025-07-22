@@ -16,7 +16,7 @@ import Link from "next/link";
 type SimplePost = {
   id?: string;
   content?: unknown;
-  published?: Date;
+  published?: string; // ISO string for consistent JSON serialization
   url?: string;
 };
 
@@ -57,11 +57,14 @@ export default function TootCardFull({
   author: SimpleActor;
 }) {
   const now = Temporal.Now.instant();
-  const timeSinceString = post.published
+  
+  // Handle ISO string dates
+  const publishedTimestamp = post.published ? new Date(post.published).getTime() : null;
+  const timeSinceString = publishedTimestamp
     ? timeSince(
         Temporal.Duration.from(
           now.since(
-            Temporal.Instant.fromEpochMilliseconds(post.published.getTime()),
+            Temporal.Instant.fromEpochMilliseconds(publishedTimestamp),
           ),
         ),
       )

@@ -15,7 +15,7 @@ import Image from "next/image";
 type SimplePost = {
   id?: string; // Use string instead of URL to avoid serialization issues
   content?: unknown;
-  published?: Date;
+  published?: string; // ISO string for consistent JSON serialization
   url?: string; // Use string instead of URL to avoid serialization issues
 };
 
@@ -56,11 +56,14 @@ export default function TootCard({
   author: SimpleActor;
 }) {
   const now = Temporal.Now.instant();
-  const timeSinceString = post.published
+  
+  // Handle ISO string dates
+  const publishedTimestamp = post.published ? new Date(post.published).getTime() : null;
+  const timeSinceString = publishedTimestamp
     ? timeSince(
         Temporal.Duration.from(
           now.since(
-            Temporal.Instant.fromEpochMilliseconds(post.published.getTime()),
+            Temporal.Instant.fromEpochMilliseconds(publishedTimestamp),
           ),
         ),
       )

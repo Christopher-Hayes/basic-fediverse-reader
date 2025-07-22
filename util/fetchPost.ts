@@ -15,7 +15,7 @@ import fs from "fs";
 export type SimplePost = {
   id?: string;
   content?: unknown;
-  published?: Date;
+  published?: string; // ISO string for consistent JSON serialization
   url?: string;
 };
 
@@ -41,7 +41,7 @@ async function convertToSimpleTypes(
           id: post.id?.toString(),
           content: post.content,
           published: post.published
-            ? new Date(post.published.toString())
+            ? new Date(post.published.toString()).toISOString()
             : undefined,
           url: post.url?.toString(),
         },
