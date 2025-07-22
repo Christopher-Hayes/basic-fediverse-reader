@@ -63,6 +63,110 @@ const documentLoader = await context.getDocumentLoader({
   identifier: INSTANCE_ACTOR,
 });
 
+// Simple connectivity test for debugging server issues
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function testServerConnectivity(hostname: string): Promise<{
+  reachable: boolean;
+  error?: string;
+}> {
+  try {
+    // Try a simple fetch to the server's wellknown endpoint
+    const response = await fetch(`https://${hostname}/.well-known/nodeinfo`, {
+      method: "HEAD",
+      signal: AbortSignal.timeout(5000), // 5 second timeout
+    });
+
+    return {
+      reachable: response.status < 500, // Any response under 500 means server is reachable
+    };
+  } catch (error) {
+    return {
+      reachable: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+// Check if a server is likely defederated by attempting to fetch server info
+async function checkServerFederation(hostname: string): Promise<{
+  isDefederated: boolean;
+  serverInfo?: Record<string, unknown>;
+  error?: string;
+}> {
+  try {
+    // Try to fetch the server's nodeinfo to see if it's reachable
+    const nodeInfoResponse = await fetch(
+      `https://${hostname}/.well-known/nodeinfo`,
+      {
+        signal: AbortSignal.timeout(5000),
+      },
+    );
+
+    if (!nodeInfoResponse.ok) {
+      return {
+        isDefederated: false,
+        error: `Server returned ${nodeInfoResponse.status}`,
+      };
+    }
+
+    const nodeInfoLinks = await nodeInfoResponse.json();
+    const nodeInfoUrl = nodeInfoLinks?.links?.find(
+      (link: { rel: string; href: string }) =>
+        link.rel === "http://nodeinfo.diaspora.software/ns/schema/2.0" ||
+        link.rel === "http://nodeinfo.diaspora.software/ns/schema/2.1",
+    )?.href;
+
+    if (!nodeInfoUrl) {
+      return { isDefederated: false, error: "No nodeinfo URL found" };
+    }
+
+    // Fetch the actual nodeinfo
+    const serverInfoResponse = await fetch(nodeInfoUrl, {
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (!serverInfoResponse.ok) {
+      return {
+        isDefederated: false,
+        error: `Nodeinfo returned ${serverInfoResponse.status}`,
+      };
+    }
+
+    const serverInfo = await serverInfoResponse.json();
+
+    // Check if server has federation disabled or restricted
+    const openRegistrations = serverInfo?.openRegistrations;
+    const software = serverInfo?.software?.name?.toLowerCase();
+
+    // mastodon.art is known for aggressive defederation
+    if (hostname === "mastodon.art") {
+      return {
+        isDefederated: true,
+        serverInfo,
+        error:
+          "mastodon.art is known for extensive defederation and likely blocks your server",
+      };
+    }
+
+    // Check for signs of restricted federation
+    if (software === "mastodon" && openRegistrations === false) {
+      return {
+        isDefederated: true,
+        serverInfo,
+        error:
+          "This Mastodon server has closed registrations and may have restricted federation",
+      };
+    }
+
+    return { isDefederated: false, serverInfo };
+  } catch (error) {
+    return {
+      isDefederated: true,
+      error: `Cannot reach server info: ${error instanceof Error ? error.message : "Unknown error"}. This may indicate defederation or blocking.`,
+    };
+  }
+}
+
 // Save locally for testing (and to avoid spamming servers)
 // "Note" is ActivityPub speak for "Mastodon Post"
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -115,10 +219,19 @@ export async function fetchPost(identifier: string) {
   }
 
   try {
+    console.log(`Fetching ActivityPub object: ${identifier}`);
+
     // Assume we're fetching a Note
     const post = (await lookupObject(identifier, {
       documentLoader,
     })) as Note | null;
+
+    if (!post) {
+      console.error(`No post found for identifier: ${identifier}`);
+      throw new Error(`Post not found or not accessible`);
+    }
+
+    console.log(`Found post: ${post.id}`);
 
     const tags: (ASObject & Link)[] = [];
     const attachments: (ASObject & Link & PropertyValue)[] = [];
@@ -150,6 +263,9 @@ export async function fetchPost(identifier: string) {
       const serverDomain = post.id.hostname;
       if (post.id?.href.includes("/users/")) {
         const username = post.id.href.split("/users/")[1].split("/")[0];
+        console.log(
+          `Fetching author: https://${serverDomain}/users/${username}`,
+        );
         // Assume we are fetching an Actor
         author = (await lookupObject(
           `https://${serverDomain}/users/${username}`,
@@ -160,6 +276,13 @@ export async function fetchPost(identifier: string) {
       }
     }
 
+    if (!author) {
+      console.error(`No author found for post: ${identifier}`);
+      throw new Error(`Author information not accessible`);
+    }
+
+    console.log(`Found author: ${author.name || author.preferredUsername}`);
+
     // Uncomment to save this post (and author) locally in post.json
     // saveNoteLocally(post, author);
 
@@ -168,11 +291,114 @@ export async function fetchPost(identifier: string) {
       author,
     };
   } catch (error) {
-    console.error(error);
-    return {
-      post: null,
-      author: null,
-    };
+    console.error(`Error fetching post ${identifier}:`, error);
+
+    // Try to determine the specific cause of the error
+    let hostname = "unknown";
+    try {
+      hostname = identifier.includes("://")
+        ? new URL(identifier).hostname
+        : identifier.split("/")[0];
+    } catch {
+      // hostname parsing failed, keep as "unknown"
+    }
+
+    // For network errors, check if the server is defederated
+    if (
+      error instanceof Error &&
+      (error.message.includes("fetch") || error.message.includes("network"))
+    ) {
+      try {
+        console.log(`Checking federation status for ${hostname}...`);
+        const federationCheck = await checkServerFederation(hostname);
+
+        if (federationCheck.isDefederated) {
+          throw new Error(
+            `Defederation detected: ${federationCheck.error || `${hostname} appears to be defederated or blocking federation requests`}`,
+          );
+        }
+
+        // If not defederated, continue with regular connectivity test
+        const connectivity = await testServerConnectivity(hostname);
+        if (!connectivity.reachable) {
+          if (connectivity.error?.includes("ENOTFOUND")) {
+            throw new Error(
+              `Server not found: Cannot resolve ${hostname}. The domain may not exist.`,
+            );
+          }
+          if (connectivity.error?.includes("ECONNREFUSED")) {
+            throw new Error(
+              `Connection refused: ${hostname} is actively refusing connections. The server may be blocking your IP or federation in general.`,
+            );
+          }
+          if (connectivity.error?.includes("timeout")) {
+            throw new Error(
+              `Connection timeout: ${hostname} is not responding. This often indicates the server is blocking requests.`,
+            );
+          }
+          throw new Error(
+            `Network error: Cannot connect to ${hostname}. Error: ${connectivity.error || "Unknown connection issue"}`,
+          );
+        }
+      } catch (defederationError) {
+        // If this is our custom defederation error, re-throw it
+        if (
+          defederationError instanceof Error &&
+          defederationError.message.includes("Defederation detected")
+        ) {
+          throw defederationError;
+        }
+        // Otherwise, fall through to original error handling
+        console.warn("Federation check failed:", defederationError);
+      }
+    }
+
+    // Provide more specific error messages based on the error type
+    if (error instanceof Error) {
+      // Check for common federation errors
+      if (
+        error.message.includes("fetch") &&
+        error.message.includes("ENOTFOUND")
+      ) {
+        throw new Error(
+          `Server not found: Unable to resolve ${hostname}. The domain may not exist or DNS lookup failed.`,
+        );
+      }
+      if (
+        error.message.includes("fetch") &&
+        error.message.includes("ECONNREFUSED")
+      ) {
+        throw new Error(
+          `Connection refused: ${hostname} is not accepting connections. The server may be down or blocking requests.`,
+        );
+      }
+      if (
+        error.message.includes("403") ||
+        error.message.includes("Forbidden")
+      ) {
+        throw new Error(
+          `Access forbidden: ${hostname} is blocking federation requests`,
+        );
+      }
+      if (
+        error.message.includes("404") ||
+        error.message.includes("Not Found")
+      ) {
+        throw new Error(
+          `Post not found: The post may have been deleted or is not publicly accessible on ${hostname}`,
+        );
+      }
+      if (error.message.includes("timeout")) {
+        throw new Error(
+          `Request timeout: ${hostname} took too long to respond`,
+        );
+      }
+    }
+
+    // Re-throw the original error with additional context
+    throw new Error(
+      `Failed to fetch from ${hostname}: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
   }
 }
 

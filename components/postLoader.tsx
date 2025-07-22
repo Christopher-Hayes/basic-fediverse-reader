@@ -7,6 +7,7 @@ import Image from "next/image";
 import ImageOverlay from "@/public/image-overlay.svg";
 import classnames from "classnames";
 import type { SimplePost, SimpleActor } from "@/util/fetchPost";
+import { fetchPostData } from "@/lib/server-actions";
 
 type PostData = {
   post: SimplePost & {
@@ -21,20 +22,6 @@ type PostData = {
   }>;
 };
 
-// Client-side post fetcher
-async function fetchPostData(postUrl: string): Promise<PostData | null> {
-  try {
-    const response = await fetch(`/api/post/${encodeURIComponent(postUrl)}`);
-    if (!response.ok) {
-      return null;
-    }
-    return await response.json();
-  } catch (error) {
-    console.error("Failed to fetch post:", error);
-    return null;
-  }
-}
-
 function PostContent({ postUrl }: { postUrl: string }) {
   const [postData, setPostData] = useState<PostData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -46,8 +33,9 @@ function PostContent({ postUrl }: { postUrl: string }) {
         setPostData(data);
         setLoading(false);
       })
-      .catch(() => {
-        setError("Failed to load post");
+      .catch((err) => {
+        console.error("Error fetching post:", err);
+        setError(err?.message || "Failed to load post");
         setLoading(false);
       });
   }, [postUrl]);
@@ -58,10 +46,33 @@ function PostContent({ postUrl }: { postUrl: string }) {
 
   if (error || !postData) {
     return (
-      <div className="px-8 pt-8 sm:pt-16 pb-32 sm:pb-48 min-h-screen flex flex-col gap-8">
+      <div className="px-8 pt-8 sm:pt-16 pb-32 sm:pb-48 h-screen flex flex-col gap-8">
         <div className="h-full flex flex-col items-center justify-center gap-4">
           <h1 className="text-3xl">Sorry!</h1>
           <h2>Unable to fetch post.</h2>
+          {error && (
+            <div className="text-red-600 bg-red-50 p-4 rounded max-w-lg text-center">
+              <p className="font-semibold mb-2">Error: {error}</p>
+              {error.includes("defederated") && (
+                <p className="text-sm">
+                  <strong>What is defederation?</strong> Some servers block
+                  federation with other servers to moderate content. This means
+                  posts from those servers cannot be accessed through
+                  federation.
+                </p>
+              )}
+              {postUrl.includes("mastodon.art") && (
+                <div className="mt-3 p-3 bg-yellow-100 border border-yellow-300 rounded text-yellow-800 text-sm">
+                  <p className="font-semibold">Note about mastodon.art:</p>
+                  <p>
+                    This server is known to not federate with almost all of the
+                    fediverse. They have extensively defederated from most other
+                    servers, making their posts inaccessible through federation.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
           <p>
             Post URL:{" "}
             <a
@@ -72,6 +83,11 @@ function PostContent({ postUrl }: { postUrl: string }) {
             >
               {postUrl}
             </a>
+          </p>
+          <p className="text-sm text-fg-muted max-w-md text-center">
+            This might be due to the source server being defederated (blocking
+            federation), the server blocking requests, or the post being
+            unavailable.
           </p>
         </div>
       </div>

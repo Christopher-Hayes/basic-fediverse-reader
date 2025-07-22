@@ -3,22 +3,7 @@
 import { Suspense, useState, useEffect } from "react";
 import TootCard from "@/components/tootCard";
 import type { SimplePost, SimpleActor } from "@/util/fetchPost";
-
-// Client-side posts fetcher for homepage
-async function fetchHomepagePosts(): Promise<
-  Array<{ post: SimplePost; author: SimpleActor }>
-> {
-  try {
-    const response = await fetch(`/api/posts/@chris@floss.social?limit=3`);
-    if (!response.ok) {
-      return [];
-    }
-    return await response.json();
-  } catch (error) {
-    console.error("Failed to fetch homepage posts:", error);
-    return [];
-  }
-}
+import { fetchPostsData } from "@/lib/server-actions";
 
 function HomepagePostsContent() {
   const [posts, setPosts] = useState<
@@ -27,7 +12,7 @@ function HomepagePostsContent() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchHomepagePosts()
+    fetchPostsData("@chris@floss.social", 3)
       .then((data) => {
         setPosts(data);
         setLoading(false);

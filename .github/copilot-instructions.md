@@ -67,6 +67,12 @@ public/                         # SVG assets and graphics
 
 ### Fedify Framework Deep Dive
 - **Documentation**: Primary docs at https://fedify.dev/reference/, especially the Context API and vocabulary sections
+- **Core API Reference**: https://fedify.dev/reference/fedify/ - Complete API documentation
+- **ActivityPub Vocabulary**: https://fedify.dev/reference/vocab/ - All ActivityPub object types and properties
+- **Context API**: https://fedify.dev/reference/fedify/Context/ - Federation context and document loader
+- **Lookup Functions**: https://fedify.dev/reference/fedify/lookupObject/ - Object resolution and federation
+- **Federation Setup**: https://fedify.dev/manual/federation/ - Server setup and configuration
+- **Error Handling**: https://fedify.dev/manual/federation/#error-handling - Best practices for federation errors
 - **Collection Traversal**: Use `ctx.traverseCollection()` to iterate through ActivityPub collections like outboxes
   - Pattern: `for await (const activity of ctx.traverseCollection(outbox, { documentLoader }))`
   - Always handle errors gracefully as remote servers may be unreachable or return malformed data

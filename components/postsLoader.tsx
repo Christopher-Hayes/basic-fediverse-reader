@@ -3,25 +3,7 @@
 import { Suspense, useState, useEffect } from "react";
 import TootCardFull from "@/components/tootCardFull";
 import type { SimplePost, SimpleActor } from "@/util/fetchPost";
-
-// Client-side posts fetcher
-async function fetchRecentPosts(
-  handle: string,
-  limit: number = 6,
-): Promise<Array<{ post: SimplePost; author: SimpleActor }>> {
-  try {
-    const response = await fetch(
-      `/api/posts/${encodeURIComponent(handle)}?limit=${limit}`,
-    );
-    if (!response.ok) {
-      return [];
-    }
-    return await response.json();
-  } catch (error) {
-    console.error("Failed to fetch posts:", error);
-    return [];
-  }
-}
+import { fetchPostsData } from "@/lib/server-actions";
 
 function PostsContent({ handle }: { handle: string }) {
   const [posts, setPosts] = useState<
@@ -31,7 +13,7 @@ function PostsContent({ handle }: { handle: string }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchRecentPosts(handle, 6)
+    fetchPostsData(handle, 6)
       .then((data) => {
         setPosts(data);
         setLoading(false);

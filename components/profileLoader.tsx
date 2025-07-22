@@ -3,22 +3,7 @@
 import { Suspense, useState, useEffect } from "react";
 import ProfileHeader from "@/components/profileHeader";
 import type { SimpleActorProfile } from "@/components/profileHeader";
-
-// Client-side profile data fetcher
-async function fetchProfileData(
-  handle: string,
-): Promise<SimpleActorProfile | null> {
-  try {
-    const response = await fetch(`/api/profile/${encodeURIComponent(handle)}`);
-    if (!response.ok) {
-      return null;
-    }
-    return await response.json();
-  } catch (error) {
-    console.error("Failed to fetch profile:", error);
-    return null;
-  }
-}
+import { fetchProfileData } from "@/lib/server-actions";
 
 function ProfileContent({ handle }: { handle: string }) {
   const [profile, setProfile] = useState<SimpleActorProfile | null>(null);

@@ -18,13 +18,15 @@ export default function TootAuthorClient({
   author: SimpleActor;
 }) {
   const now = Temporal.Now.instant();
-  
+
   // Handle ISO string dates
   const timeSinceString = post.published
     ? timeSince(
         Temporal.Duration.from(
           now.since(
-            Temporal.Instant.fromEpochMilliseconds(new Date(post.published).getTime()),
+            Temporal.Instant.fromEpochMilliseconds(
+              new Date(post.published).getTime(),
+            ),
           ),
         ),
       )
@@ -32,9 +34,7 @@ export default function TootAuthorClient({
 
   const username = `@${author.preferredUsername?.toString()}`;
   const server = `@${
-    typeof author.url === "string"
-      ? new URL(author.url).host
-      : ""
+    typeof author.url === "string" ? new URL(author.url).host : ""
   }`;
   const fullIdentifier = `${username}${server}`;
   const HIGHLIGHT_PATH_LENGTH = 708;

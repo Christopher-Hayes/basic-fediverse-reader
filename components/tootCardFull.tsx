@@ -57,15 +57,15 @@ export default function TootCardFull({
   author: SimpleActor;
 }) {
   const now = Temporal.Now.instant();
-  
+
   // Handle ISO string dates
-  const publishedTimestamp = post.published ? new Date(post.published).getTime() : null;
+  const publishedTimestamp = post.published
+    ? new Date(post.published).getTime()
+    : null;
   const timeSinceString = publishedTimestamp
     ? timeSince(
         Temporal.Duration.from(
-          now.since(
-            Temporal.Instant.fromEpochMilliseconds(publishedTimestamp),
-          ),
+          now.since(Temporal.Instant.fromEpochMilliseconds(publishedTimestamp)),
         ),
       )
     : "Some time ago";
