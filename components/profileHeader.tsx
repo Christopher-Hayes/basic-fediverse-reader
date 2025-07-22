@@ -1,8 +1,10 @@
 import Image from "next/image";
-import parse from "html-react-parser";
 import Swirl1 from "@/public/swirl-1.svg";
 import Swirl2 from "@/public/swirl-2.svg";
 import AuthorIconMobileBg from "@/public/author-icon-mobile-bg.svg";
+import type { CustomEmoji } from "@/util/emoji";
+import EmojiText from "@/components/emojiText";
+import EmojiHtml from "@/components/emojiHtml";
 
 export type SimpleActorProfile = {
   id?: string;
@@ -11,6 +13,7 @@ export type SimpleActorProfile = {
   url?: string;
   avatarUrl?: string;
   summary?: string;
+  emojis?: CustomEmoji[];
 };
 
 export default function ProfileHeader({
@@ -22,11 +25,13 @@ export default function ProfileHeader({
   const server = actor.url ? `@${new URL(actor.url).host}` : "";
   const fullIdentifier = `${username}${server}`;
 
-  const displayName =
+  const displayNameText =
     actor.name?.toString() ||
     actor.preferredUsername?.toString() ||
     "Unknown User";
-  const bio = actor.summary ? parse(actor.summary) : null;
+
+  // Get the bio text for emoji processing
+  const bioText = actor.summary || "";
 
   return (
     <div className="relative w-full">
@@ -43,7 +48,7 @@ export default function ProfileHeader({
               <div className="relative z-10 w-[120px] h-[120px]">
                 <Image
                   src={actor.avatarUrl}
-                  alt={displayName}
+                  alt={displayNameText}
                   width={120}
                   height={120}
                   className="w-full h-full object-cover filter sepia profile-avatar-clip"
@@ -60,16 +65,22 @@ export default function ProfileHeader({
           <div className="flex-1 min-w-0">
             {/* Name and handle */}
             <div className="mb-4">
-              <h1 className="text-3xl font-bold text-fg mb-2">{displayName}</h1>
+              <h1 className="text-3xl font-bold text-fg mb-2">
+                <EmojiText text={displayNameText} emojis={actor.emojis} />
+              </h1>
               <p className="text-lg text-fg-muted font-mono">
                 {fullIdentifier}
               </p>
             </div>
 
             {/* Bio/Description */}
-            {bio && (
+            {bioText && (
               <div className="mb-6">
-                <div className="text-fg prose prose-sm max-w-none">{bio}</div>
+                <EmojiHtml
+                  html={bioText}
+                  emojis={actor.emojis}
+                  className="text-fg prose prose-sm max-w-none"
+                />
               </div>
             )}
 

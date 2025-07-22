@@ -11,22 +11,15 @@ import { Temporal } from "@js-temporal/polyfill";
 import { timeSince } from "@/util/helpers";
 import Image from "next/image";
 import Link from "next/link";
+import type { SimplePost, SimpleActor } from "@/util/fetchPost";
+import EmojiText from "@/components/emojiText";
 
-// Simple types for the card component
-type SimplePost = {
-  id?: string;
-  content?: unknown;
-  published?: string; // ISO string for consistent JSON serialization
-  url?: string;
-};
-
-type SimpleActor = {
-  id?: string;
-  name?: unknown;
-  preferredUsername?: unknown;
-  url?: string;
-  avatarUrl?: string;
-};
+/**
+ * Escape special regex characters in a string
+ */
+function escapeRegExp(string: string): string {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 // Full content link component
 function FullCardLink({
@@ -100,7 +93,19 @@ export default function TootCardFull({
     }
   };
 
-  const contentHtml = post?.content?.toString() ?? "";
+  let contentHtml = post?.content?.toString() ?? "";
+
+  // Process emojis in content if available
+  if (post.emojis && post.emojis.length > 0) {
+    post.emojis.forEach((emoji) => {
+      const imgTag = `<img src="${emoji.url}" alt="${emoji.name}" title="${emoji.name}" class="inline-emoji" style="display: inline; height: 1.2em; width: auto; vertical-align: text-top; margin: 0 0.1em;" loading="lazy" />`;
+      contentHtml = contentHtml.replace(
+        new RegExp(escapeRegExp(emoji.name), "g"),
+        imgTag,
+      );
+    });
+  }
+
   const contentsReact = parse(contentHtml, options);
 
   // Generate the correct URL format for the post route
@@ -143,7 +148,10 @@ export default function TootCardFull({
               href={`/profile/${encodeURIComponent(fullIdentifier)}`}
               className="font-semibold text-fg hover:text-amber-700 focus:text-amber-700 outline-none truncate"
             >
-              {author.name?.toString()}
+              <EmojiText
+                text={author.name?.toString() || ""}
+                emojis={author.emojis}
+              />
             </Link>
             <span className="text-fg-muted">·</span>
             <a

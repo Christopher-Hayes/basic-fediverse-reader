@@ -104,3 +104,55 @@ Creates an organic, hand-drawn style border that matches the design aesthetic
 .cloud-svg g:nth-child(6) {
   animation-duration: 900ms;
 }
+
+/* Custom emoji styles */
+.inline-emoji {
+  display: inline !important;
+  height: 1.2rem !important;
+  min-width: 1rem !important;
+  width: auto !important;
+  vertical-align: text-top !important;
+  margin: 0 0.1em !important;
+  border-radius: 2px;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  /* use sepia and grayscale filters to create a hand-drawn effect */
+  filter: sepia(0.8) grayscale(0.5);
+}
+
+/* Ensure emojis scale properly in different contexts */
+h1 .inline-emoji {
+  height: 1.1rem !important;
+}
+
+h2 .inline-emoji {
+  height: 1.15rem !important;
+}
+
+h3 .inline-emoji {
+  height: 1.2rem !important;
+}
+
+.text-sm .inline-emoji {
+  height: 1.1erm !important;
+}
+
+.text-xs .inline-emoji {
+  height: 1rem !important;
+}
+
+.text-lg .inline-emoji {
+  height: 1.3rem !important;
+}
+
+.text-xl .inline-emoji {
+  height: 1.4rem !important;
+}
+
+.text-2xl .inline-emoji {
+  height: 1.6rem !important;
+}
+
+.text-3xl .inline-emoji {
+  height: 2rem !important;
+}

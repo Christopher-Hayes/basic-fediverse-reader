@@ -136,7 +136,7 @@ function PostContent({ postUrl }: { postUrl: string }) {
           {post && (
             <>
               <div className="w-full flex-grow flex flex-col justify-center pt-24 sm:pt-0">
-                <Toot contents={contentHtml} />
+                <Toot contents={contentHtml} emojis={post.emojis} />
               </div>
               {author && (
                 <footer className="w-full">

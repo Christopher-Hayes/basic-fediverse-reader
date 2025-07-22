@@ -9,6 +9,7 @@ import AuthorHoverCloudBg from "@/public/author-hover-cloud-bg.svg";
 import AuthorIconMobileBg from "@/public/author-icon-mobile-bg.svg";
 import AuthorNameMobileBg from "@/public/author-name-mobile-bg.svg";
 import type { SimplePost, SimpleActor } from "@/util/fetchPost";
+import EmojiText from "@/components/emojiText";
 
 export default function TootAuthorClient({
   post,
@@ -61,7 +62,10 @@ export default function TootAuthorClient({
               href={`/profile/${encodeURIComponent(fullIdentifier)}`}
               rel="noopener noreferrer"
             >
-              {author.name?.toString()}
+              <EmojiText
+                text={author.name?.toString() || ""}
+                emojis={author.emojis}
+              />
             </a>
             <div className="p-4 absolute z-20 left-[calc(50%-2.5em)] -top-8 *:hidden sm:*:peer-hover:flex sm:*:peer-focus:flex *:hover:flex *:focus:flex">
               <AuthorHoverCloudBg className="cloud-svg overflow-visible transform scale-125" />
@@ -114,7 +118,10 @@ export default function TootAuthorClient({
             href={`/profile/${encodeURIComponent(fullIdentifier)}`}
             rel="noopener noreferrer"
           >
-            {author.name?.toString()}
+            <EmojiText
+              text={author.name?.toString() || ""}
+              emojis={author.emojis}
+            />
           </a>
         </div>
         <div className="relative z-10 flex flex-col gap-1 text-center sm:text-right text-fg-muted">

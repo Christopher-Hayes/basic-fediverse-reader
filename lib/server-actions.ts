@@ -7,6 +7,7 @@ import { fetchUserPosts } from "@/util/fetchPost";
 import { fetchPost } from "@/util/fetchPost";
 import type { SimpleActorProfile } from "@/components/profileHeader";
 import type { SimplePost, SimpleActor } from "@/util/fetchPost";
+import { extractCustomEmojis } from "@/util/emoji";
 
 // Get document loader for ActivityPub operations
 const getDocumentLoader = async () => {
@@ -49,6 +50,13 @@ export async function fetchProfileData(
     const icon = await actor.getIcon({ documentLoader });
     const summary = actor.summary;
 
+    // Extract custom emojis from actor tags
+    const actorTags: unknown[] = [];
+    for await (const tag of actor.getTags()) {
+      actorTags.push(tag);
+    }
+    const actorEmojis = await extractCustomEmojis(actorTags);
+
     // Convert actor to simple type
     const simpleActor: SimpleActorProfile = {
       id: actor.id?.toString(),
@@ -57,6 +65,7 @@ export async function fetchProfileData(
       url: actor.url?.toString(),
       avatarUrl: icon?.url?.toString(),
       summary: summary?.toString(),
+      emojis: actorEmojis,
     };
 
     return simpleActor;
@@ -146,6 +155,20 @@ export async function fetchPostData(postUrl: string): Promise<{
     const documentLoader = await getDocumentLoader();
     const icon = await author.getIcon({ documentLoader });
 
+    // Extract custom emojis from post tags
+    const postTags: unknown[] = [];
+    for await (const tag of post.getTags()) {
+      postTags.push(tag);
+    }
+    const postEmojis = await extractCustomEmojis(postTags);
+
+    // Extract custom emojis from author tags
+    const authorTags: unknown[] = [];
+    for await (const tag of author.getTags()) {
+      authorTags.push(tag);
+    }
+    const authorEmojis = await extractCustomEmojis(authorTags);
+
     const response = {
       post: {
         id: post.id?.toString(),
@@ -154,6 +177,7 @@ export async function fetchPostData(postUrl: string): Promise<{
           ? new Date(post.published.toString()).toISOString()
           : undefined,
         url: post.url?.toString(),
+        emojis: postEmojis,
       },
       author: {
         id: author.id?.toString(),
@@ -161,6 +185,7 @@ export async function fetchPostData(postUrl: string): Promise<{
         preferredUsername: author.preferredUsername,
         url: author.url?.toString(),
         avatarUrl: icon?.url?.toString(),
+        emojis: authorEmojis,
       },
       images,
     };

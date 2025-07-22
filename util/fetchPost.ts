@@ -11,12 +11,15 @@ import {
   Create,
 } from "@fedify/fedify/vocab";
 import fs from "fs";
+import { extractCustomEmojis, type CustomEmoji } from "./emoji";
+
 // Simple types for the card component
 export type SimplePost = {
   id?: string;
   content?: unknown;
   published?: string; // ISO string for consistent JSON serialization
   url?: string;
+  emojis?: CustomEmoji[];
 };
 
 export type SimpleActor = {
@@ -25,6 +28,7 @@ export type SimpleActor = {
   preferredUsername?: unknown;
   url?: string;
   avatarUrl?: string;
+  emojis?: CustomEmoji[];
 };
 
 // Convert Fedify objects to simple types for serialization
@@ -36,6 +40,20 @@ async function convertToSimpleTypes(
       // Fetch the author's icon/avatar
       const icon = await author.getIcon({ documentLoader });
 
+      // Extract custom emojis from post tags
+      const postTags: unknown[] = [];
+      for await (const tag of post.getTags()) {
+        postTags.push(tag);
+      }
+      const postEmojis = await extractCustomEmojis(postTags);
+
+      // Extract custom emojis from author tags
+      const authorTags: unknown[] = [];
+      for await (const tag of author.getTags()) {
+        authorTags.push(tag);
+      }
+      const authorEmojis = await extractCustomEmojis(authorTags);
+
       return {
         post: {
           id: post.id?.toString(),
@@ -44,6 +62,7 @@ async function convertToSimpleTypes(
             ? new Date(post.published.toString()).toISOString()
             : undefined,
           url: post.url?.toString(),
+          emojis: postEmojis,
         },
         author: {
           id: author.id?.toString(),
@@ -51,6 +70,7 @@ async function convertToSimpleTypes(
           preferredUsername: author.preferredUsername,
           url: author.url?.toString(),
           avatarUrl: icon?.url?.toString(),
+          emojis: authorEmojis,
         },
       };
     }),

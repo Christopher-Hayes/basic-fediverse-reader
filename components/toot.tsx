@@ -10,6 +10,16 @@ import Star2 from "@/public/star-2.svg";
 import Star3 from "@/public/star-3.svg";
 import TootMobileTopBorder from "@/public/toot-mobile-top-border.svg";
 import TootMobileBottomBorder from "@/public/toot-mobile-bottom-border.svg";
+import type { CustomEmoji } from "@/util/emoji";
+
+/**
+ * Escape special regex characters in a string
+ * @param string The string to escape
+ * @returns Escaped string safe for use in RegExp
+ */
+function escapeRegExp(string: string): string {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 // How to render a hashtag/link in a toot
 function Link({
@@ -62,7 +72,26 @@ function Link({
 }
 
 // How to render a toot (author information not included)
-export default function Toot({ contents }: { contents: string }) {
+export default function Toot({
+  contents,
+  emojis = [],
+}: {
+  contents: string;
+  emojis?: CustomEmoji[];
+}) {
+  // Process content to replace emoji shortcodes with images
+  let processedContents = contents;
+
+  if (emojis && emojis.length > 0) {
+    emojis.forEach((emoji) => {
+      const imgTag = `<img src="${emoji.url}" alt="${emoji.name}" title="${emoji.name}" class="inline-emoji" style="display: inline; height: 1.2em; width: auto; vertical-align: text-top; margin: 0 0.1em;" loading="lazy" />`;
+      processedContents = processedContents.replace(
+        new RegExp(escapeRegExp(emoji.name), "g"),
+        imgTag,
+      );
+    });
+  }
+
   const options: HTMLReactParserOptions = {};
   options.replace = (domNode: DOMNode, index: number) => {
     if (domNode instanceof Element) {
@@ -102,7 +131,7 @@ export default function Toot({ contents }: { contents: string }) {
     }
   };
 
-  const contentsReact = parse(contents, options);
+  const contentsReact = parse(processedContents, options);
 
   return (
     <div className="relative flex flex-col gap-4">
