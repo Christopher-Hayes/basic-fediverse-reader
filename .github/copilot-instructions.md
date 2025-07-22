@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Basic Fediverse Reader is a simple reader application for viewing posts and profiles from the fediverse (ActivityPub network). Built with Next.js, React, TypeScript, and Tailwind CSS, it uses Fedify for ActivityPub protocol integration. The app allows users to input either fediverse post URLs or profile URLs, automatically detecting the type and displaying posts with rich formatting, hashtag highlighting, and author information, or showing user profiles with recent posts. This is a personal learning project demonstrating ActivityPub integration and is not considered production-ready.
+Basic Fediverse Reader is a simple reader application for viewing posts and profiles from the fediverse (ActivityPub network). Built with Next.js, React, TypeScript, and Tailwind CSS, it uses Fedify for ActivityPub protocol integration. The app allows users to input either fediverse post URLs or profile URLs, automatically detecting the type and displaying posts with rich formatting, hashtag highlighting, custom emoji support, and author information, or showing user profiles with recent posts. This is a personal learning project demonstrating ActivityPub integration and is not considered production-ready.
 
 ## Technology Stack
 
@@ -25,6 +25,7 @@ Basic Fediverse Reader is a simple reader application for viewing posts and prof
 - **OpenComicFont** - Custom web font for comic-style typography
 - **Extensive SVG graphics** - Custom illustrations and UI elements in `/public`
 - **Custom clip-path animations** - Creative visual effects for avatars and elements
+- **Custom Emoji Support** - Server-specific emoji rendering with hand-drawn filters
 
 ## Architecture Patterns
 
@@ -47,12 +48,16 @@ components/
 ├── tootCard.tsx                # Compact post card component
 ├── tootCardFull.tsx            # Full post card component
 ├── profileHeader.tsx           # Profile header display component
-└── tagList.tsx                 # Hashtag rendering component
+├── tagList.tsx                 # Hashtag rendering component
+├── emojiText.tsx               # Client component for text with custom emojis
+└── emojiHtml.tsx               # Client component for HTML with custom emojis
 
 util/
 ├── federation.ts               # Fedify setup and instance actor
 ├── fetchPost.ts                # ActivityPub post and profile fetching logic
-└── helpers.ts                  # URL parsing and utility functions
+├── helpers.ts                  # URL parsing and utility functions
+├── emoji.ts                    # Custom emoji extraction and processing utilities
+└── emojiServer.ts              # Server actions for emoji processing
 
 public/                         # SVG assets and graphics
 └── [extensive SVG collection]  # Custom illustrations and UI elements
@@ -191,6 +196,38 @@ const avatarUrl = icon?.url?.toString();
 - Handles various ActivityPub Actor properties
 - Integrates with creative SVG styling system
 - Responsive layout for mobile and desktop
+
+### Custom Emoji Support
+The application includes comprehensive support for fediverse custom emojis:
+
+#### Emoji Components (`emojiText.tsx`, `emojiHtml.tsx`)
+- **EmojiText**: Client component for rendering plain text with custom emoji replacements
+- **EmojiHtml**: Client component for rendering HTML content with custom emoji replacements
+- **Real-time Processing**: Emojis are processed client-side for smooth rendering
+- **Server Integration**: Emoji data is extracted during ActivityPub object fetching
+
+#### Emoji Utilities (`emoji.ts`, `emojiServer.ts`)
+- **extractCustomEmojis()**: Extracts emoji data from ActivityPub tags (Emoji vocabulary objects)
+- **replaceCustomEmojis()**: Replaces shortcodes with HTML img tags
+- **processCustomEmojis()**: Server action for emoji processing
+- **Type Safety**: Full TypeScript support with CustomEmoji interface
+
+#### Emoji Features
+- **ActivityPub Integration**: Uses Fedify's Emoji vocabulary objects from ActivityPub tags
+- **Server-Specific**: Each fediverse server can have unique custom emoji sets
+- **Universal Support**: Works in usernames, post content, and profile bios
+- **Styled Integration**: Custom CSS with hand-drawn aesthetic filters
+- **Performance**: Client-side processing with server-side data extraction
+
+#### Implementation Pattern
+```tsx
+// Extract emojis during ActivityPub fetching
+const emojis = await extractCustomEmojis(activityPubTags);
+
+// Use in components
+<EmojiText text={displayName} emojis={actor.emojis} />
+<EmojiHtml html={bioContent} emojis={actor.emojis} />
+```
 
 ### Federation Route (`[fedify]/[[...catchAll]]/route.ts`)
 - Handles all ActivityPub federation requests
@@ -391,6 +428,7 @@ const options: HTMLReactParserOptions = {
 - Extensive use of custom SVG graphics for visual interest
 - Creative clip-path and animation effects
 - Responsive design optimized for both mobile and desktop
+- Custom emoji styling with `.inline-emoji` CSS class featuring hand-drawn filters
 
 ## Error Handling
 - Always handle ActivityPub lookup failures gracefully

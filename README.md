@@ -8,6 +8,7 @@ This project is a personal learning project showcasing a simple Next.js app to f
 
 - **Post Viewing**: View individual fediverse posts with rich formatting, hashtag highlighting, and author information
 - **Profile Viewing**: Browse user profiles and their recent posts from across the fediverse
+- **Custom Emoji Support**: Displays server-specific custom emojis in usernames, posts, and profiles (e.g., `:archlinux:`, `:neovim:`)
 - **Multi-Platform Support**: Works with various fediverse platforms (Mastodon, Pixelfed, etc.)
 - **Smart URL Detection**: Automatically detects whether input is a post URL or profile URL
 - **ActivityPub Integration**: Uses Fedify for proper ActivityPub protocol implementation
@@ -53,6 +54,18 @@ To use the Basic Fediverse Reader, you can run different scripts provided in the
    - Profile URLs: `server.com/@username`, `server.com/users/username`
    - Works with elk.zone URLs and other common formats
 
+### Custom Emoji Support
+
+The application now supports custom emojis from fediverse servers! When viewing posts or profiles that include custom emojis (like `:archlinux:` or `:neovim:`), they will be automatically displayed as inline images:
+
+- **In Usernames**: Custom emojis in display names show up properly (e.g., "codeDude :archlinux: :neovim:")
+- **In Post Content**: Emoji shortcodes in post text are replaced with the actual emoji images
+- **In Profile Bios**: HTML content in user bios displays custom emojis correctly
+- **Server-Specific**: Each fediverse server can have its own unique emoji set
+- **Styling**: Emojis are styled to match the hand-drawn aesthetic of the app
+
+The custom emoji feature uses ActivityPub's emoji tags to fetch and display server-specific emojis, making the fediverse experience more authentic and expressive.
+
 ## Project Overview
 
 Here is a brief overview of important files and folders in the project:
@@ -66,8 +79,12 @@ Here is a brief overview of important files and folders in the project:
   - `toot.tsx` - Post display component with rich formatting
   - `profileHeader.tsx` - User profile header display
   - `tootCard.tsx` & `tootCardFull.tsx` - Post cards for different layouts
+  - `emojiText.tsx` - Client component for rendering text with custom emojis
+  - `emojiHtml.tsx` - Client component for rendering HTML content with custom emojis
 - `/util` has federation setup, post/profile fetching, and utility functions:
   - `federation.ts` - Fedify setup and ActivityPub configuration
   - `fetchPost.ts` - Logic for fetching posts and user data from ActivityPub
   - `helpers.ts` - URL parsing and utility functions
+  - `emoji.ts` - Custom emoji extraction and processing utilities
+  - `emojiServer.ts` - Server actions for emoji processing
 - `/public` has the bulk of the custom SVGs used throughout the interface.
