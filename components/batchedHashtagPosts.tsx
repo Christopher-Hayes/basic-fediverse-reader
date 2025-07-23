@@ -117,15 +117,15 @@ export default function BatchedHashtagPosts({
         // Show loading card if this batch is still loading OR if post is undefined (not yet attempted)
         if (loadingBatches.includes(batchIndex) || post === undefined) {
           // Only show one loading card per batch to avoid clutter
-          if (index % 5 === 0) {
-            return (
-              <LoadingCard
-                key={`loading-${batchIndex}`}
-                batchIndex={batchIndex}
-              />
-            );
-          }
-          return null;
+          // if (index % 5 === 0) {
+          return (
+            <LoadingCard
+              key={`loading-${batchIndex}`}
+              batchIndex={batchIndex}
+            />
+          );
+          // }
+          // return null;
         }
 
         // Show post if successfully loaded
