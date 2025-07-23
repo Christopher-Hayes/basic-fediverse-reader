@@ -1,15 +1,14 @@
 "use client";
 
-import { Temporal } from "@js-temporal/polyfill";
 import Image from "next/image";
 import Swirl1 from "@/public/swirl-1.svg";
 import Swirl2 from "@/public/swirl-2.svg";
-import { timeSince } from "@/util/helpers";
 import AuthorHoverCloudBg from "@/public/author-hover-cloud-bg.svg";
 import AuthorIconMobileBg from "@/public/author-icon-mobile-bg.svg";
 import AuthorNameMobileBg from "@/public/author-name-mobile-bg.svg";
 import type { SimplePost, SimpleActor } from "@/util/fetchPost";
 import EmojiText from "@/components/emojiText";
+import TimeSince from "@/components/timeSince";
 
 export default function TootAuthorClient({
   post,
@@ -18,21 +17,6 @@ export default function TootAuthorClient({
   post: SimplePost;
   author: SimpleActor;
 }) {
-  const now = Temporal.Now.instant();
-
-  // Handle ISO string dates
-  const timeSinceString = post.published
-    ? timeSince(
-        Temporal.Duration.from(
-          now.since(
-            Temporal.Instant.fromEpochMilliseconds(
-              new Date(post.published).getTime(),
-            ),
-          ),
-        ),
-      )
-    : "Some time, I forget";
-
   const username = `@${author.preferredUsername?.toString()}`;
   const server = `@${
     typeof author.url === "string" ? new URL(author.url).host : ""
@@ -131,7 +115,10 @@ export default function TootAuthorClient({
             rel="noopener noreferrer"
             className="text-base sm:text-xl hover:text-fg focus:text-fg hover:underline focus:underline decoration-2 underline-offset-4 outline-none"
           >
-            {timeSinceString}
+            <TimeSince
+              publishedDate={post.published}
+              fallback="Some time, I forget"
+            />
           </a>
           {/* <p className="whitespace-nowrap text-base">
             {publishedDayOfWeek}, {publishedMonthDay}{" "}

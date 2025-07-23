@@ -7,12 +7,12 @@ import parse, {
   Text,
   domToReact,
 } from "html-react-parser";
-import { Temporal } from "@js-temporal/polyfill";
-import { timeSince, convertMentionUrl } from "@/util/helpers";
+import { convertMentionUrl } from "@/util/helpers";
 import Image from "next/image";
 import Link from "next/link";
 import type { SimplePost, SimpleActor } from "@/util/fetchPost";
 import EmojiText from "@/components/emojiText";
+import TimeSince from "@/components/timeSince";
 
 /**
  * Escape special regex characters in a string
@@ -53,20 +53,6 @@ export default function TootCardFull({
   post: SimplePost;
   author: SimpleActor;
 }) {
-  const now = Temporal.Now.instant();
-
-  // Handle ISO string dates
-  const publishedTimestamp = post.published
-    ? new Date(post.published).getTime()
-    : null;
-  const timeSinceString = publishedTimestamp
-    ? timeSince(
-        Temporal.Duration.from(
-          now.since(Temporal.Instant.fromEpochMilliseconds(publishedTimestamp)),
-        ),
-      )
-    : "Some time ago";
-
   const username = `@${author.preferredUsername?.toString()}`;
   const server = typeof author.url === "string" ? new URL(author.url).host : "";
   const fullIdentifier = `${username}@${server}`;
@@ -196,7 +182,7 @@ export default function TootCardFull({
               rel="noopener noreferrer"
               className="text-sm text-fg-muted hover:text-fg focus:text-fg outline-none flex-shrink-0"
             >
-              {timeSinceString}
+              <TimeSince publishedDate={post.published} />
             </a>
           </div>
           <p className="text-sm text-fg-muted truncate">{fullIdentifier}</p>
