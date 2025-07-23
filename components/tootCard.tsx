@@ -8,7 +8,7 @@ import parse, {
   domToReact,
 } from "html-react-parser";
 import { Temporal } from "@js-temporal/polyfill";
-import { timeSince } from "@/util/helpers";
+import { timeSince, convertMentionUrl } from "@/util/helpers";
 import Image from "next/image";
 import type { SimplePost, SimpleActor } from "@/util/fetchPost";
 import EmojiText from "@/components/emojiText";
@@ -36,7 +36,8 @@ function CardLink({
         isHashtag ? "" : "line-clamp-2"
       }`}
       href={href}
-      {...(!isHashtag && { target: "_blank", rel: "noopener noreferrer" })}
+      target={href.startsWith("/") ? "_self" : "_blank"}
+      rel={href.startsWith("/") ? undefined : "noopener noreferrer"}
     >
       {children}
     </a>
@@ -100,6 +101,9 @@ export default function TootCard({
           finalHref = server
             ? `/hashtag/${hashtagText}?server=${encodeURIComponent(server)}`
             : `/hashtag/${hashtagText}`;
+        } else {
+          // Check if this is a mention link and convert to internal profile link
+          finalHref = convertMentionUrl(attribs.href, linkText, attribs.class);
         }
 
         return (
@@ -216,7 +220,7 @@ export default function TootCard({
           href={generatePostUrl(post.url)}
           className="text-xs text-amber-700 hover:text-amber-900 focus:text-amber-900 hover:underline focus:underline outline-none"
         >
-          View full post →
+          Read toot →
         </a>
       </div>
     </article>

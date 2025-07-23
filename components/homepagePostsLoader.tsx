@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect } from "react";
 import TootCard from "@/components/tootCard";
 import type { SimplePost, SimpleActor } from "@/util/fetchPost";
 import { fetchPostsData } from "@/lib/server-actions";
+import Link from "next/link";
 
 function HomepagePostsContent() {
   const [posts, setPosts] = useState<
@@ -33,8 +34,13 @@ function HomepagePostsContent() {
   return (
     <section className="w-full max-w-6xl px-4">
       <h2 className="text-2xl font-bold text-center mb-8 text-fg">
-        Recent Posts from{" "}
-        <span className="text-amber-700">@chris@floss.social</span>
+        Recent Toots from{" "}
+        <Link
+          href="/profile/@chris@floss.social"
+          className="text-amber-700 hover:text-amber-900 focus:text-amber-900 hover:underline decoration-1 underline-offset-2"
+        >
+          @chris@floss.social
+        </Link>
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
         {posts
@@ -60,8 +66,13 @@ function HomepagePostsSkeleton() {
   return (
     <section className="w-full max-w-6xl px-4">
       <h2 className="text-2xl font-bold text-center mb-8 text-fg">
-        Recent Posts from{" "}
-        <span className="text-amber-700">@chris@floss.social</span>
+        Recent Toots from{" "}
+        <Link
+          href="/profile/@chris@floss.social"
+          className="text-amber-700 hover:text-amber-900 focus:text-amber-900 hover:underline decoration-1 underline-offset-2"
+        >
+          @chris@floss.social
+        </Link>
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
         {Array.from({ length: 3 }).map((_, index) => (

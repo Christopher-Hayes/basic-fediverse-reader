@@ -9,7 +9,7 @@ const openComicFont = localFont({
 
 export const metadata: Metadata = {
   title: "Fediverse Reader",
-  description: "View posts across the fediverse",
+  description: "View toots across the fediverse",
 };
 
 export default function RootLayout({

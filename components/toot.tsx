@@ -11,6 +11,7 @@ import Star3 from "@/public/star-3.svg";
 import TootMobileTopBorder from "@/public/toot-mobile-top-border.svg";
 import TootMobileBottomBorder from "@/public/toot-mobile-bottom-border.svg";
 import type { CustomEmoji } from "@/util/emoji";
+import { convertMentionUrl } from "@/util/helpers";
 
 /**
  * Escape special regex characters in a string
@@ -124,6 +125,9 @@ export default function Toot({
           finalHref = server
             ? `/hashtag/${hashtagText}?server=${encodeURIComponent(server)}`
             : `/hashtag/${hashtagText}`;
+        } else {
+          // Check if this is a mention link and convert to internal profile link
+          finalHref = convertMentionUrl(attribs.href, linkText, attribs.class);
         }
 
         return (

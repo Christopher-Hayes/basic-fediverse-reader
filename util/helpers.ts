@@ -123,3 +123,45 @@ export function extractServerFromUrl(url: string | undefined): string | null {
     return null;
   }
 }
+
+/**
+ * Check if a URL is a mention link and convert it to an internal profile link
+ * @param url The URL to check
+ * @param linkText The text content of the link
+ * @param className The CSS class of the link element
+ * @returns Internal profile URL if it's a mention, original URL otherwise
+ */
+export function convertMentionUrl(
+  url: string,
+  linkText: string,
+  className?: string,
+): string {
+  // Check if this is a mention link based on class or URL pattern
+  const isMention =
+    className?.includes("mention") && className?.includes("u-url");
+
+  if (!isMention) {
+    return url;
+  }
+
+  try {
+    const urlObj = new URL(url);
+    const server = urlObj.hostname;
+    const pathname = urlObj.pathname;
+
+    // Extract username from pathname (e.g., /@username or /users/username)
+    const usernameMatch =
+      pathname.match(/\/@([^\/]+)$/) || pathname.match(/\/users\/([^\/]+)$/);
+
+    if (usernameMatch) {
+      const username = usernameMatch[1];
+      const handle = `${username}@${server}`;
+      return `/profile/${encodeURIComponent(handle)}`;
+    }
+  } catch (error) {
+    console.warn("Error parsing mention URL:", error);
+  }
+
+  // Fallback to original URL if parsing fails
+  return url;
+}

@@ -58,7 +58,7 @@ function PostContent({ postUrl }: { postUrl: string }) {
                 <p className="text-sm">
                   <strong>What is defederation?</strong> Some servers block
                   federation with other servers to moderate content. This means
-                  posts from those servers cannot be accessed through
+                  toots from those servers cannot be accessed through
                   federation.
                 </p>
               )}
@@ -68,14 +68,14 @@ function PostContent({ postUrl }: { postUrl: string }) {
                   <p>
                     This server is known to not federate with almost all of the
                     fediverse. They have extensively defederated from most other
-                    servers, making their posts inaccessible through federation.
+                    servers, making their toots inaccessible through federation.
                   </p>
                 </div>
               )}
             </div>
           )}
           <p>
-            Post URL:{" "}
+            Toot URL:{" "}
             <a
               href={postUrl}
               target="_blank"
@@ -87,7 +87,7 @@ function PostContent({ postUrl }: { postUrl: string }) {
           </p>
           <p className="text-sm text-fg-muted max-w-md text-center">
             This might be due to the source server being defederated (blocking
-            federation), the server blocking requests, or the post being
+            federation), the server blocking requests, or the toot being
             unavailable.
           </p>
         </div>

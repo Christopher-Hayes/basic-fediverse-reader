@@ -31,15 +31,15 @@ function PostsContent({ handle }: { handle: string }) {
   if (error) {
     return (
       <div className="mt-12">
-        <h2 className="text-2xl font-bold text-fg mb-6">Recent Posts</h2>
-        <p className="text-lg text-fg-muted">Failed to load posts</p>
+        <h2 className="text-2xl font-bold text-fg mb-6">Recent Toots</h2>
+        <p className="text-lg text-fg-muted">Failed to load toots</p>
       </div>
     );
   }
 
   return (
     <div className="mt-12">
-      <h2 className="text-2xl font-bold text-fg mb-6">Recent Posts</h2>
+      <h2 className="text-2xl font-bold text-fg mb-6">Recent Toots</h2>
       {posts.length > 0 ? (
         <div className="columns-1 md:columns-2 gap-6">
           {posts.map((postData, index) => (
@@ -51,7 +51,7 @@ function PostsContent({ handle }: { handle: string }) {
           ))}
         </div>
       ) : (
-        <p className="text-lg text-fg-muted">No recent posts found</p>
+        <p className="text-lg text-fg-muted">No recent toots found</p>
       )}
     </div>
   );
@@ -60,7 +60,7 @@ function PostsContent({ handle }: { handle: string }) {
 function PostsSkeleton() {
   return (
     <div className="mt-12">
-      <h2 className="text-2xl font-bold text-fg mb-6">Recent Posts</h2>
+      <h2 className="text-2xl font-bold text-fg mb-6">Recent Toots</h2>
       <div className="columns-1 md:columns-2 gap-6">
         {Array.from({ length: 3 }).map((_, index) => (
           <div key={index} className="break-inside-avoid mb-6">

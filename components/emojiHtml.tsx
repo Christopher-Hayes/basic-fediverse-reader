@@ -9,6 +9,7 @@ import parse, {
   domToReact,
 } from "html-react-parser";
 import type { CustomEmoji } from "@/util/emoji";
+import { convertMentionUrl } from "@/util/helpers";
 
 interface EmojiHtmlProps {
   html: string;
@@ -127,6 +128,9 @@ export default function EmojiHtml({
           finalHref = server
             ? `/hashtag/${hashtagText}?server=${encodeURIComponent(server)}`
             : `/hashtag/${hashtagText}`;
+        } else {
+          // Check if this is a mention link and convert to internal profile link
+          finalHref = convertMentionUrl(attribs.href, linkText, attribs.class);
         }
 
         return (

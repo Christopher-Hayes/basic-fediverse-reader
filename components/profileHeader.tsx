@@ -133,7 +133,7 @@ export default function ProfileHeader({
                       <span className="text-fg font-medium">
                         {actor.outboxCount.toLocaleString()}
                       </span>
-                      <span>Posts</span>
+                      <span>Toots</span>
                     </span>
                   )}
                   {actor.published && (
