@@ -108,9 +108,62 @@ async function HashtagResults({
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
           <h2 className="text-xl font-semibold text-fg mb-2">No posts found</h2>
-          <p className="text-fg-muted">
+          <p className="text-fg-muted mb-4">
             No posts containing #{tag} were found.
           </p>
+
+          <div className="text-sm text-fg-muted bg-bg-lighter p-4 rounded-md text-left">
+            <p className="font-semibold mb-2">Debug Information:</p>
+            <ul className="space-y-1">
+              <li>• Search method: {results.searchMethod || "unknown"}</li>
+              <li>• Total found in search: {results.totalFound}</li>
+              <li>
+                • Posts that could be fetched: {results.postPromises.length}
+              </li>
+              {results.debugInfo && (
+                <>
+                  <li>
+                    • Mastodon API found: {results.debugInfo.mastodonApiFound}
+                  </li>
+                  <li>
+                    • ActivityPub fetch attempts:{" "}
+                    {results.debugInfo.activityPubFetchAttempts}
+                  </li>
+                </>
+              )}
+              {results.searchMethod === "mastodon-search" && (
+                <>
+                  <li>• Using floss.social Mastodon API</li>
+                  <li>• Then fetching full posts via ActivityPub/Fedify</li>
+                </>
+              )}
+              {results.totalFound > 0 && results.postPromises.length === 0 && (
+                <li className="text-amber-600 font-medium">
+                  • Warning: Search found {results.totalFound} posts but
+                  ActivityPub fetching failed for all of them
+                </li>
+              )}
+            </ul>
+
+            {results.totalFound > 0 && results.postPromises.length === 0 && (
+              <div className="mt-3 pt-3 border-t border-bg-darker">
+                <p className="font-semibold mb-2 text-amber-700">
+                  Possible solutions:
+                </p>
+                <ul className="space-y-1 text-amber-600">
+                  <li>
+                    • Some posts may be from servers with ActivityPub federation
+                    issues
+                  </li>
+                  <li>• Posts might be deleted or no longer available</li>
+                  <li>
+                    • Network timeout connecting to remote fediverse servers
+                  </li>
+                  <li>• Check browser console for detailed error logs</li>
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );

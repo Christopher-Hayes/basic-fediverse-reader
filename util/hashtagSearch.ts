@@ -24,7 +24,7 @@ export type HashtagSearchResult = {
  * Mastodon search API response for status search
  */
 interface MastodonSearchResponse {
-  accounts: any[];
+  accounts: unknown[];
   statuses: Array<{
     id: string;
     url: string;
@@ -40,7 +40,7 @@ interface MastodonSearchResponse {
       avatar?: string;
     };
   }>;
-  hashtags: any[];
+  hashtags: unknown[];
 }
 
 /**
@@ -201,6 +201,10 @@ export async function searchHashtagStreaming(
   server?: string;
   searchMethod?: "mastodon-search" | "not-supported";
   error?: string;
+  debugInfo?: {
+    mastodonApiFound: number;
+    activityPubFetchAttempts: number;
+  };
 }> {
   try {
     const accessToken = process.env.MASTODON_ACCESS_TOKEN;
@@ -212,6 +216,10 @@ export async function searchHashtagStreaming(
         server,
         searchMethod: "not-supported",
         error: "MASTODON_ACCESS_TOKEN not configured",
+        debugInfo: {
+          mastodonApiFound: 0,
+          activityPubFetchAttempts: 0,
+        },
       };
     }
 
@@ -240,6 +248,10 @@ export async function searchHashtagStreaming(
         server,
         searchMethod: "not-supported",
         error: "Search API failed",
+        debugInfo: {
+          mastodonApiFound: 0,
+          activityPubFetchAttempts: 0,
+        },
       };
     }
 
@@ -251,11 +263,20 @@ export async function searchHashtagStreaming(
         totalFound: 0,
         hashtag,
         searchMethod: "mastodon-search",
+        debugInfo: {
+          mastodonApiFound: 0,
+          activityPubFetchAttempts: 0,
+        },
       };
     }
 
+    const mastodonApiFound = searchResult.statuses.length;
+
     // Create individual promises for each post - they'll resolve independently
     const { documentLoader } = context;
+    let fetchSuccessCount = 0;
+    let fetchFailureCount = 0;
+
     const postPromises = searchResult.statuses.map(async (mastodonPost) => {
       try {
         // Use the ActivityPub URI (not the web URL) for better federation compatibility
@@ -297,6 +318,7 @@ export async function searchHashtagStreaming(
               // Get author icon
               const icon = await author.getIcon({ documentLoader });
 
+              fetchSuccessCount++;
               return {
                 post: {
                   id: note.id?.toString(),
@@ -320,6 +342,7 @@ export async function searchHashtagStreaming(
           }
         }
       } catch (error) {
+        fetchFailureCount++;
         console.warn(
           `Failed to fetch ActivityPub object for ${mastodonPost.url}:`,
           error,
@@ -327,14 +350,31 @@ export async function searchHashtagStreaming(
         // Return null for failed posts
         return null;
       }
+      fetchFailureCount++;
       return null;
     });
+
+    // Log summary for debugging
+    console.log(
+      `Hashtag search for #${hashtag}: Mastodon API found ${mastodonApiFound} posts, attempting ActivityPub fetch for all`,
+    );
+
+    // Wait a bit for some promises to resolve for logging
+    setTimeout(() => {
+      console.log(
+        `Hashtag search status: ${fetchSuccessCount} successful fetches, ${fetchFailureCount} failures`,
+      );
+    }, 2000);
 
     return {
       postPromises,
       totalFound: searchResult.statuses.length,
       hashtag,
       searchMethod: "mastodon-search",
+      debugInfo: {
+        mastodonApiFound: mastodonApiFound,
+        activityPubFetchAttempts: mastodonApiFound,
+      },
     };
   } catch (error) {
     console.warn("Failed to search hashtag with Mastodon API:", error);
@@ -345,6 +385,10 @@ export async function searchHashtagStreaming(
       server,
       searchMethod: "not-supported",
       error: "Search failed",
+      debugInfo: {
+        mastodonApiFound: 0,
+        activityPubFetchAttempts: 0,
+      },
     };
   }
 }
