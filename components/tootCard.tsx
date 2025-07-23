@@ -160,20 +160,24 @@ export default function TootCard({
   return (
     <article className="bg-bg-lighter border border-bg-darker rounded-lg p-4 max-w-sm flex flex-col gap-3 hover:shadow-md transition-shadow duration-200">
       {/* Author header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full overflow-hidden bg-bg-darker flex-shrink-0">
-          {author.avatarUrl ? (
-            <Image
-              src={author.avatarUrl}
-              alt={`${author.name?.toString() ?? "User"} avatar`}
-              width={40}
-              height={40}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-gray-400 to-gray-600"></div>
-          )}
-        </div>
+      <div className="flex items-center gap-1">
+        {author.avatarUrl ? (
+          <Image
+            src={author.avatarUrl}
+            alt={`${author.name?.toString() ?? "User"} avatar`}
+            width={64}
+            height={64}
+            className="object-contain pfp filter grayscale sm:grayscale-0 sm:sepia flex-shrink-0 transform scale-75"
+            style={{
+              clipPath: "url(#avatarClipPath)",
+            }}
+          />
+        ) : (
+          <div
+            className="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-600 flex-shrink-0"
+            style={{ clipPath: "url(#avatarClipPath)" }}
+          ></div>
+        )}
         <div className="flex-grow min-w-0">
           <div className="flex items-center gap-1">
             <a
