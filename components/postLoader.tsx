@@ -115,7 +115,7 @@ function PostContent({ postUrl }: { postUrl: string }) {
               width={images[0].width ?? 600}
               height={images[0].height ?? 800}
               quality={90}
-              className="w-full h-full object-cover filter sepia brightness-95"
+              className="w-full h-full max-h-screen object-cover filter sepia brightness-95"
             />
             <ImageOverlay className="absolute z-10 text-bg -right-[33vh] -top-[3vh] h-[106vh] w-[45vh]" />
             <ImageOverlay className="absolute z-10 text-bg-darker -left-[33vh] -top-[3vh] h-[106vh] w-[45vh]" />
@@ -127,7 +127,7 @@ function PostContent({ postUrl }: { postUrl: string }) {
               width={images[0].width ?? 600}
               height={images[0].height ?? 800}
               quality={90}
-              className="w-full min-h-screen object-cover filter grayscale contrast-75"
+              className="w-full min-h-screen max-h-screen object-cover filter grayscale contrast-75"
             />
           </aside>
         </>
