@@ -14,7 +14,7 @@ interface HashtagPageProps {
 
 function HashtagHeader({ tag }: { tag: string }) {
   return (
-    <div className="w-full max-w-4xl mx-auto p-4">
+    <div className="w-full max-w-6xl mx-auto p-4">
       <div className="bg-bg-lighter rounded-lg p-6 border-2 border-bg-darker">
         <h1 className="text-3xl font-bold text-fg mb-4">
           #{decodeURIComponent(tag)}
@@ -36,7 +36,7 @@ async function HashtagResults({
 
   if (results.error) {
     return (
-      <div className="w-full max-w-4xl mx-auto p-4">
+      <div className="w-full max-w-6xl mx-auto p-4">
         <div className="bg-white rounded-lg p-8 border-2 border-bg-darker text-center">
           <svg
             className="mx-auto mb-4 text-fg-muted"
@@ -162,7 +162,7 @@ async function HashtagResults({
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-4">
+    <div className="w-full max-w-6xl mx-auto p-4">
       <div className="mb-4 text-fg-muted text-sm">
         Found {results.totalFound} posts •
         {results.searchMethod === "mastodon-search" &&
@@ -190,10 +190,10 @@ export default async function HashtagPage({
         <div className="mt-8">
           <Suspense
             fallback={
-              <div className="w-full max-w-4xl mx-auto p-4">
+              <div className="w-full max-w-6xl mx-auto p-4">
                 <div className="mb-4 h-4 bg-bg-darker rounded w-64 animate-pulse"></div>
-                <div className="columns-1 md:columns-2 gap-6">
-                  {[...Array(6)].map((_, i) => (
+                <div className="columns-1 md:columns-2 lg:columns-3 gap-6">
+                  {[...Array(20)].map((_, i) => (
                     <div
                       key={i}
                       className="bg-bg-lighter border-2 border-bg-darker rounded-lg p-6 break-inside-avoid mb-6 animate-pulse"

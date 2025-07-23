@@ -109,7 +109,7 @@ export default function BatchedHashtagPosts({
   );
 
   return (
-    <div className="columns-1 md:columns-2 gap-6">
+    <div className="columns-1 md:columns-2 lg:columns-3 gap-6">
       {postUrls.map((url, index) => {
         const batchIndex = Math.floor(index / 5);
         const post = posts[index];
