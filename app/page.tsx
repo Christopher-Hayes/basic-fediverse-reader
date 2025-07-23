@@ -3,6 +3,9 @@ import Image from "next/image";
 import Splash from "@/public/homepage-splash.svg";
 import HomepagePostsLoader from "@/components/homepagePostsLoader";
 
+// Revalidate the page once per day (86400 seconds = 24 hours)
+export const revalidate = 86400;
+
 export default function Home() {
   return (
     <main className="px-8 py-8 sm:py-16 min-h-screen flex flex-col gap-8 items-center justify-between">

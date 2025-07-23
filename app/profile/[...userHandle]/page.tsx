@@ -2,6 +2,9 @@ import Nav from "@/components/nav";
 import ProfileLoader from "@/components/profileLoader";
 import PostsLoader from "@/components/postsLoader";
 
+// Revalidate the page once per day (86400 seconds = 24 hours)
+export const revalidate = 86400;
+
 export default async function ProfilePage({
   params,
 }: {
