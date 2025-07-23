@@ -5,6 +5,7 @@ import { context, INSTANCE_ACTOR } from "@/util/federation";
 import { Actor } from "@fedify/fedify/vocab";
 import { fetchUserPosts } from "@/util/fetchPost";
 import { fetchPost } from "@/util/fetchPost";
+import { fetchPostByUrl } from "@/util/hashtagSearch";
 import type { SimpleActorProfile } from "@/components/profileHeader";
 import type { SimplePost, SimpleActor } from "@/util/fetchPost";
 import { extractCustomEmojis } from "@/util/emoji";
@@ -282,4 +283,40 @@ export async function fetchPostData(postUrl: string): Promise<{
       `Failed to fetch post: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
+}
+
+// Server action to fetch a single post by URL for hashtag search results
+export async function fetchHashtagPost(
+  url: string,
+): Promise<{ post: SimplePost; author: SimpleActor } | null> {
+  try {
+    return await fetchPostByUrl(url);
+  } catch (error) {
+    console.warn(`Failed to fetch hashtag post ${url}:`, error);
+    return null;
+  }
+}
+
+// Server action to fetch multiple hashtag posts in a batch (up to 5 at a time)
+export async function fetchHashtagPostsBatch(
+  urls: string[],
+): Promise<Array<{ post: SimplePost; author: SimpleActor } | null>> {
+  console.log(`Fetching batch of ${urls.length} hashtag posts`);
+
+  // Process up to 5 URLs at a time to avoid overwhelming the server
+  const results = await Promise.all(
+    urls.slice(0, 5).map(async (url) => {
+      try {
+        return await fetchPostByUrl(url);
+      } catch (error) {
+        console.warn(`Failed to fetch hashtag post ${url}:`, error);
+        return null;
+      }
+    }),
+  );
+
+  console.log(
+    `Batch complete: ${results.filter((r) => r !== null).length}/${urls.length} successful`,
+  );
+  return results;
 }

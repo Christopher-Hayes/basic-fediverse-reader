@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { searchHashtagStreaming } from "@/util/hashtagSearch";
-import StreamingPostCard from "@/components/streamingPostCard";
+import BatchedHashtagPosts from "@/components/batchedHashtagPosts";
 
 interface HashtagPageProps {
   params: Promise<{
@@ -90,7 +90,7 @@ async function HashtagResults({
     );
   }
 
-  if (results.postPromises.length === 0) {
+  if (results.postUrls.length === 0) {
     return (
       <div className="w-full max-w-4xl mx-auto p-4">
         <div className="bg-white rounded-lg p-8 border-2 border-bg-darker text-center">
@@ -117,19 +117,11 @@ async function HashtagResults({
             <ul className="space-y-1">
               <li>• Search method: {results.searchMethod || "unknown"}</li>
               <li>• Total found in search: {results.totalFound}</li>
-              <li>
-                • Posts that could be fetched: {results.postPromises.length}
-              </li>
+              <li>• Post URLs found: {results.postUrls.length}</li>
               {results.debugInfo && (
-                <>
-                  <li>
-                    • Mastodon API found: {results.debugInfo.mastodonApiFound}
-                  </li>
-                  <li>
-                    • ActivityPub fetch attempts:{" "}
-                    {results.debugInfo.activityPubFetchAttempts}
-                  </li>
-                </>
+                <li>
+                  • Mastodon API found: {results.debugInfo.mastodonApiFound}
+                </li>
               )}
               {results.searchMethod === "mastodon-search" && (
                 <>
@@ -137,15 +129,15 @@ async function HashtagResults({
                   <li>• Then fetching full posts via ActivityPub/Fedify</li>
                 </>
               )}
-              {results.totalFound > 0 && results.postPromises.length === 0 && (
+              {results.totalFound > 0 && results.postUrls.length === 0 && (
                 <li className="text-amber-600 font-medium">
-                  • Warning: Search found {results.totalFound} posts but
-                  ActivityPub fetching failed for all of them
+                  • Warning: Search found {results.totalFound} posts but no
+                  valid URLs
                 </li>
               )}
             </ul>
 
-            {results.totalFound > 0 && results.postPromises.length === 0 && (
+            {results.totalFound > 0 && results.postUrls.length === 0 && (
               <div className="mt-3 pt-3 border-t border-bg-darker">
                 <p className="font-semibold mb-2 text-amber-700">
                   Possible solutions:
@@ -178,11 +170,7 @@ async function HashtagResults({
         {results.server && ` • Originally from ${results.server}`}
       </div>
 
-      <div className="columns-1 md:columns-2 gap-6">
-        {results.postPromises.map((postPromise, index) => (
-          <StreamingPostCard key={index} postPromise={postPromise} />
-        ))}
-      </div>
+      <BatchedHashtagPosts postUrls={results.postUrls} />
     </div>
   );
 }

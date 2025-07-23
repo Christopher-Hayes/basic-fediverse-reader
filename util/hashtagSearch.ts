@@ -21,6 +21,80 @@ export type HashtagSearchResult = {
 };
 
 /**
+ * Fetch a single post by URL using ActivityPub
+ * This will be used as a server action for streaming post loading
+ */
+export async function fetchPostByUrl(
+  url: string,
+): Promise<{ post: SimplePost; author: SimpleActor } | null> {
+  try {
+    const { documentLoader } = context;
+
+    // Fetch the post using Fedify
+    const note = (await lookupObject(url, { documentLoader })) as Note;
+
+    if (note instanceof Note) {
+      // Get the author from the note's attribution
+      const attributions = await note.getAttribution({ documentLoader });
+      const authorUrl = attributions
+        ? Array.isArray(attributions)
+          ? attributions[0]?.id?.toString()
+          : attributions?.id?.toString()
+        : null;
+
+      if (authorUrl) {
+        const author = (await lookupObject(authorUrl, {
+          documentLoader,
+        })) as Actor;
+
+        if (author) {
+          // Extract custom emojis from post
+          const postTags: unknown[] = [];
+          for await (const tag of note.getTags()) {
+            postTags.push(tag);
+          }
+          const postEmojis = await extractCustomEmojis(postTags);
+
+          // Extract custom emojis from author
+          const authorTags: unknown[] = [];
+          for await (const tag of author.getTags()) {
+            authorTags.push(tag);
+          }
+          const authorEmojis = await extractCustomEmojis(authorTags);
+
+          // Get author icon
+          const icon = await author.getIcon({ documentLoader });
+
+          return {
+            post: {
+              id: note.id?.toString(),
+              content: note.content,
+              published: note.published
+                ? new Date(note.published.toString()).toISOString()
+                : undefined,
+              url: note.url?.toString(),
+              emojis: postEmojis,
+            },
+            author: {
+              id: author.id?.toString(),
+              name: author.name,
+              preferredUsername: author.preferredUsername,
+              url: author.url?.toString(),
+              avatarUrl: icon?.url?.toString(),
+              emojis: authorEmojis,
+            },
+          };
+        }
+      }
+    }
+  } catch (error) {
+    console.warn(`Failed to fetch ActivityPub object for ${url}:`, error);
+  }
+
+  return null;
+}
+
+/**
  * Mastodon search API response for status search
  */
 interface MastodonSearchResponse {
@@ -185,17 +259,18 @@ async function searchMastodonHashtag(
 }
 
 /**
- * Search for posts containing a hashtag and return individual post promises for streaming
+ * Search for posts containing a hashtag and return Mastodon search results
+ * The actual ActivityPub fetching will be done by server actions
  *
  * @param hashtag The hashtag to search for (without #)
  * @param server Optional server parameter (ignored - we always use floss.social for search)
- * @returns Search metadata and array of post promises that resolve individually
+ * @returns Search metadata and array of Mastodon post URLs for server action fetching
  */
 export async function searchHashtagStreaming(
   hashtag: string,
   server?: string,
 ): Promise<{
-  postPromises: Promise<{ post: SimplePost; author: SimpleActor } | null>[];
+  postUrls: string[];
   totalFound: number;
   hashtag: string;
   server?: string;
@@ -203,14 +278,13 @@ export async function searchHashtagStreaming(
   error?: string;
   debugInfo?: {
     mastodonApiFound: number;
-    activityPubFetchAttempts: number;
   };
 }> {
   try {
     const accessToken = process.env.MASTODON_ACCESS_TOKEN;
     if (!accessToken) {
       return {
-        postPromises: [],
+        postUrls: [],
         totalFound: 0,
         hashtag,
         server,
@@ -218,7 +292,6 @@ export async function searchHashtagStreaming(
         error: "MASTODON_ACCESS_TOKEN not configured",
         debugInfo: {
           mastodonApiFound: 0,
-          activityPubFetchAttempts: 0,
         },
       };
     }
@@ -242,7 +315,7 @@ export async function searchHashtagStreaming(
         `Mastodon search failed: ${response.status} ${response.statusText}`,
       );
       return {
-        postPromises: [],
+        postUrls: [],
         totalFound: 0,
         hashtag,
         server,
@@ -250,7 +323,6 @@ export async function searchHashtagStreaming(
         error: "Search API failed",
         debugInfo: {
           mastodonApiFound: 0,
-          activityPubFetchAttempts: 0,
         },
       };
     }
@@ -259,127 +331,40 @@ export async function searchHashtagStreaming(
 
     if (!searchResult.statuses || searchResult.statuses.length === 0) {
       return {
-        postPromises: [],
+        postUrls: [],
         totalFound: 0,
         hashtag,
         searchMethod: "mastodon-search",
         debugInfo: {
           mastodonApiFound: 0,
-          activityPubFetchAttempts: 0,
         },
       };
     }
 
     const mastodonApiFound = searchResult.statuses.length;
 
-    // Create individual promises for each post - they'll resolve independently
-    const { documentLoader } = context;
-    let fetchSuccessCount = 0;
-    let fetchFailureCount = 0;
-
-    const postPromises = searchResult.statuses.map(async (mastodonPost) => {
-      try {
-        // Use the ActivityPub URI (not the web URL) for better federation compatibility
-        const activityPubUrl = mastodonPost.uri || mastodonPost.url;
-
-        // Fetch the post using Fedify
-        const note = (await lookupObject(activityPubUrl, {
-          documentLoader,
-        })) as Note;
-
-        if (note instanceof Note) {
-          // Get the author from the note's attribution
-          const attributions = await note.getAttribution({ documentLoader });
-          const authorUrl = attributions
-            ? Array.isArray(attributions)
-              ? attributions[0]?.id?.toString()
-              : attributions?.id?.toString()
-            : null;
-          if (authorUrl) {
-            const author = (await lookupObject(authorUrl, {
-              documentLoader,
-            })) as Actor;
-
-            if (author) {
-              // Extract custom emojis from post
-              const postTags: unknown[] = [];
-              for await (const tag of note.getTags()) {
-                postTags.push(tag);
-              }
-              const postEmojis = await extractCustomEmojis(postTags);
-
-              // Extract custom emojis from author
-              const authorTags: unknown[] = [];
-              for await (const tag of author.getTags()) {
-                authorTags.push(tag);
-              }
-              const authorEmojis = await extractCustomEmojis(authorTags);
-
-              // Get author icon
-              const icon = await author.getIcon({ documentLoader });
-
-              fetchSuccessCount++;
-              return {
-                post: {
-                  id: note.id?.toString(),
-                  content: note.content,
-                  published: note.published
-                    ? new Date(note.published.toString()).toISOString()
-                    : undefined,
-                  url: note.url?.toString(),
-                  emojis: postEmojis,
-                },
-                author: {
-                  id: author.id?.toString(),
-                  name: author.name,
-                  preferredUsername: author.preferredUsername,
-                  url: author.url?.toString(),
-                  avatarUrl: icon?.url?.toString(),
-                  emojis: authorEmojis,
-                },
-              };
-            }
-          }
-        }
-      } catch (error) {
-        fetchFailureCount++;
-        console.warn(
-          `Failed to fetch ActivityPub object for ${mastodonPost.url}:`,
-          error,
-        );
-        // Return null for failed posts
-        return null;
-      }
-      fetchFailureCount++;
-      return null;
-    });
-
-    // Log summary for debugging
-    console.log(
-      `Hashtag search for #${hashtag}: Mastodon API found ${mastodonApiFound} posts, attempting ActivityPub fetch for all`,
+    // Extract post URLs for server action fetching
+    const postUrls = searchResult.statuses.map(
+      (status) => status.uri || status.url,
     );
 
-    // Wait a bit for some promises to resolve for logging
-    setTimeout(() => {
-      console.log(
-        `Hashtag search status: ${fetchSuccessCount} successful fetches, ${fetchFailureCount} failures`,
-      );
-    }, 2000);
+    console.log(
+      `Hashtag search for #${hashtag}: Mastodon API found ${mastodonApiFound} posts`,
+    );
 
     return {
-      postPromises,
-      totalFound: searchResult.statuses.length,
+      postUrls,
+      totalFound: mastodonApiFound,
       hashtag,
       searchMethod: "mastodon-search",
       debugInfo: {
         mastodonApiFound: mastodonApiFound,
-        activityPubFetchAttempts: mastodonApiFound,
       },
     };
   } catch (error) {
     console.warn("Failed to search hashtag with Mastodon API:", error);
     return {
-      postPromises: [],
+      postUrls: [],
       totalFound: 0,
       hashtag,
       server,
@@ -387,7 +372,6 @@ export async function searchHashtagStreaming(
       error: "Search failed",
       debugInfo: {
         mastodonApiFound: 0,
-        activityPubFetchAttempts: 0,
       },
     };
   }
