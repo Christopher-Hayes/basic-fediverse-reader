@@ -1,9 +1,22 @@
 import Nav from "@/components/nav";
-import ProfileLoader from "@/components/profileLoader";
+import ProfileHeader from "@/components/profileHeader";
 import PostsLoader from "@/components/postsLoader";
+import { fetchProfileData } from "@/lib/server-actions";
 
 // Revalidate the page once per day (86400 seconds = 24 hours)
 export const revalidate = 86400;
+
+// Pre-generate the commonly visited profile page
+export async function generateStaticParams() {
+  return [
+    {
+      userHandle: ["@chris@floss.social"],
+    },
+    {
+      userHandle: ["chris@floss.social"],
+    },
+  ];
+}
 
 export default async function ProfilePage({
   params,
@@ -34,11 +47,30 @@ export default async function ProfilePage({
     );
   }
 
+  // Server-side render the profile header for better caching
+  const profileData = await fetchProfileData(handle);
+
+  if (!profileData) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Nav />
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-xl text-fg-muted">
+            Profile not found or failed to load
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <Nav />
       <div className="flex-1 max-w-4xl mx-auto w-full px-4 py-8">
-        <ProfileLoader handle={handle} />
+        {/* Server-rendered profile header - loads instantly */}
+        <ProfileHeader actor={profileData} />
+
+        {/* Client-rendered posts - loads progressively without blocking */}
         <PostsLoader handle={handle} />
       </div>
     </div>
