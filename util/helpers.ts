@@ -107,3 +107,19 @@ export function timeSince(duration: Temporal.Duration): string {
 
   return "just now";
 }
+
+/**
+ * Extract server domain from a fediverse URL
+ * @param url The fediverse URL (post URL, profile URL, etc.)
+ * @returns The server domain or null if not extractable
+ */
+export function extractServerFromUrl(url: string | undefined): string | null {
+  if (!url) return null;
+
+  try {
+    const urlObj = new URL(url);
+    return urlObj.hostname;
+  } catch {
+    return null;
+  }
+}

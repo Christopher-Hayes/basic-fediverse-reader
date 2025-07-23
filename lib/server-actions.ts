@@ -170,8 +170,6 @@ export async function fetchPostData(postUrl: string): Promise<{
       "https://",
     );
 
-    console.log(`Attempting to fetch post: ${cleanPostUrl}`);
-
     // Get real data
     const { post, author } = await fetchPost(cleanPostUrl);
 
@@ -181,8 +179,6 @@ export async function fetchPostData(postUrl: string): Promise<{
         `Unable to fetch post from ${new URL(cleanPostUrl).hostname}. This server may be blocking federation requests.`,
       );
     }
-
-    console.log(`Successfully fetched post: ${post.id}`);
 
     const contentHtml = post?.content?.toString() ?? "";
 

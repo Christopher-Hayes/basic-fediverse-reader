@@ -14,6 +14,7 @@ interface EmojiHtmlProps {
   html: string;
   emojis?: CustomEmoji[];
   className?: string;
+  server?: string; // Server to use for hashtag links
 }
 
 /**
@@ -64,8 +65,8 @@ function Link({
       <a
         className="relative px-0.5 z-20 group-hover/link:z-30 group-focus-within/link:z-30 max-w-full inline-block truncate focus-within:underline decoration-2 underline-offset-4 outline-none"
         href={href}
-        target="_blank"
-        rel="noopener noreferrer"
+        target={href.startsWith("/") ? "_self" : "_blank"}
+        rel={href.startsWith("/") ? undefined : "noopener noreferrer"}
       >
         <span className="relative">{children}</span>
       </a>
@@ -81,6 +82,7 @@ export default function EmojiHtml({
   html,
   emojis = [],
   className,
+  server,
 }: EmojiHtmlProps) {
   // Process the HTML to replace emoji shortcodes with images
   let processedHtml = html;
@@ -116,8 +118,19 @@ export default function EmojiHtml({
 
         getInnerText(children as DOMNode[]);
 
+        // Check if this is a hashtag link
+        const isHashtag = linkText.startsWith("#");
+        let finalHref = attribs.href;
+
+        if (isHashtag) {
+          const hashtagText = encodeURIComponent(linkText.slice(1)); // Remove # and encode
+          finalHref = server
+            ? `/hashtag/${hashtagText}?server=${encodeURIComponent(server)}`
+            : `/hashtag/${hashtagText}`;
+        }
+
         return (
-          <Link key={index} href={attribs.href} linkText={linkText}>
+          <Link key={index} href={finalHref} linkText={linkText}>
             {domToReact(children as DOMNode[], options)}
           </Link>
         );

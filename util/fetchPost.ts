@@ -239,8 +239,6 @@ export async function fetchPost(identifier: string) {
   }
 
   try {
-    console.log(`Fetching ActivityPub object: ${identifier}`);
-
     // Assume we're fetching a Note
     const post = (await lookupObject(identifier, {
       documentLoader,
@@ -250,8 +248,6 @@ export async function fetchPost(identifier: string) {
       console.error(`No post found for identifier: ${identifier}`);
       throw new Error(`Post not found or not accessible`);
     }
-
-    console.log(`Found post: ${post.id}`);
 
     const tags: (ASObject & Link)[] = [];
     const attachments: (ASObject & Link & PropertyValue)[] = [];
@@ -283,9 +279,6 @@ export async function fetchPost(identifier: string) {
       const serverDomain = post.id.hostname;
       if (post.id?.href.includes("/users/")) {
         const username = post.id.href.split("/users/")[1].split("/")[0];
-        console.log(
-          `Fetching author: https://${serverDomain}/users/${username}`,
-        );
         // Assume we are fetching an Actor
         author = (await lookupObject(
           `https://${serverDomain}/users/${username}`,
@@ -300,8 +293,6 @@ export async function fetchPost(identifier: string) {
       console.error(`No author found for post: ${identifier}`);
       throw new Error(`Author information not accessible`);
     }
-
-    console.log(`Found author: ${author.name || author.preferredUsername}`);
 
     // Uncomment to save this post (and author) locally in post.json
     // saveNoteLocally(post, author);
@@ -329,7 +320,6 @@ export async function fetchPost(identifier: string) {
       (error.message.includes("fetch") || error.message.includes("network"))
     ) {
       try {
-        console.log(`Checking federation status for ${hostname}...`);
         const federationCheck = await checkServerFederation(hostname);
 
         if (federationCheck.isDefederated) {
@@ -445,16 +435,12 @@ export async function fetchUserPosts(
       return [];
     }
 
-    console.log(`Found actor: ${actor.name?.toString()} (${handle})`);
-
     // Get the actor's outbox
     const outbox = await actor.getOutbox({ documentLoader });
     if (!outbox) {
       console.error("Could not fetch outbox");
       return [];
     }
-
-    console.log(`Found outbox, traversing for recent posts...`);
 
     // Traverse the outbox collection to get recent posts
     const posts: Array<{ post: Note; author: Actor }> = [];
@@ -476,9 +462,6 @@ export async function fetchUserPosts(
               author: actor,
             });
             count++;
-            console.log(
-              `Found post ${count}: ${note.content?.toString()?.substring(0, 50)}...`,
-            );
           }
         } catch (error) {
           console.warn("Error processing activity:", error);
@@ -487,7 +470,6 @@ export async function fetchUserPosts(
       }
     }
 
-    console.log(`Successfully fetched ${posts.length} posts from ${handle}`);
     return await convertToSimpleTypes(posts);
   } catch (error) {
     console.error("Error fetching user posts:", error);

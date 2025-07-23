@@ -7,7 +7,8 @@ This project is a personal learning project showcasing a simple Next.js app to f
 ## Features
 
 - **Post Viewing**: View individual fediverse posts with rich formatting, hashtag highlighting, and author information
-- **Profile Viewing**: Browse user profiles and their recent posts from across the fediverse
+- **Profile Viewing**: Browse user profiles and their recent posts from across the fediverse  
+- **Hashtag Pages**: Click on hashtags in posts to navigate to dedicated hashtag pages (search functionality coming soon)
 - **Custom Emoji Support**: Displays server-specific custom emojis in usernames, posts, and profiles (e.g., `:archlinux:`, `:neovim:`)
 - **Multi-Platform Support**: Works with various fediverse platforms (Mastodon, Pixelfed, etc.)
 - **Smart URL Detection**: Automatically detects whether input is a post URL or profile URL
@@ -49,9 +50,11 @@ To use the Basic Fediverse Reader, you can run different scripts provided in the
 
 1. **View Posts**: Enter any fediverse post URL (e.g., `https://mastodon.social/@user/123456789`) in the input field
 2. **View Profiles**: Enter any fediverse profile URL (e.g., `https://floss.social/@chris`) to view user profiles and recent posts
-3. **Supported URL Formats**:
+3. **Browse Hashtags**: Click on any hashtag (e.g., `#hike`, `#art`) in posts to view dedicated hashtag pages
+4. **Supported URL Formats**:
    - Post URLs: `server.com/@username/postid`, `server.com/notes/abc123`
    - Profile URLs: `server.com/@username`, `server.com/users/username`
+   - Hashtag URLs: `yourapp.com/hashtag/tagname`
    - Works with elk.zone URLs and other common formats
 
 ### Custom Emoji Support
@@ -73,6 +76,7 @@ Here is a brief overview of important files and folders in the project:
 - The React code is mainly in the /app and /components folders.
   - `post/[...postUrl]` - Main page for viewing individual fediverse posts.
   - `profile/[...userHandle]` - Profile pages for viewing user profiles and recent posts.
+  - `hashtag/[tag]` - Hashtag pages for browsing posts by hashtag (search functionality coming soon).
   - `[fedify]/[[...catchAll]]` - Allows this app to run as an ActivityPub server.
 - `/components` contains reusable UI components:
   - `nav.tsx` - Smart URL input that handles both post and profile URLs
@@ -87,4 +91,5 @@ Here is a brief overview of important files and folders in the project:
   - `helpers.ts` - URL parsing and utility functions
   - `emoji.ts` - Custom emoji extraction and processing utilities
   - `emojiServer.ts` - Server actions for emoji processing
+  - `hashtagSearch.ts` - Hashtag search utilities and future implementation foundation
 - `/public` has the bulk of the custom SVGs used throughout the interface.

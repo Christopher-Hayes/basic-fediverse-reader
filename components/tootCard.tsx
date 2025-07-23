@@ -24,16 +24,19 @@ function escapeRegExp(string: string): string {
 function CardLink({
   children,
   href,
+  isHashtag = false,
 }: {
   children: React.ReactNode;
   href: string;
+  isHashtag?: boolean;
 }) {
   return (
     <a
-      className="text-amber-700 hover:text-amber-900 focus:text-amber-900 underline decoration-1 underline-offset-2 outline-none"
+      className={`text-amber-700 hover:text-amber-900 focus:text-amber-900 underline decoration-1 underline-offset-2 outline-none ${
+        isHashtag ? "" : "line-clamp-2"
+      }`}
       href={href}
-      target="_blank"
-      rel="noopener noreferrer"
+      {...(!isHashtag && { target: "_blank", rel: "noopener noreferrer" })}
     >
       {children}
     </a>
@@ -73,8 +76,34 @@ export default function TootCard({
       const { attribs, tagName, children } = domNode;
 
       if (attribs && tagName === "a") {
+        // Recursively get innerText on children to compute the length of the text
+        let linkText = "";
+
+        const getInnerText = (children: DOMNode[]) => {
+          for (const child of children) {
+            if (child instanceof Text) {
+              linkText += child.data;
+            } else if (child instanceof Element) {
+              getInnerText(child.children as DOMNode[]);
+            }
+          }
+        };
+
+        getInnerText(children as DOMNode[]);
+
+        // Check if this is a hashtag link
+        const isHashtag = linkText.startsWith("#");
+        let finalHref = attribs.href;
+
+        if (isHashtag) {
+          const hashtagText = encodeURIComponent(linkText.slice(1)); // Remove # and encode
+          finalHref = server
+            ? `/hashtag/${hashtagText}?server=${encodeURIComponent(server)}`
+            : `/hashtag/${hashtagText}`;
+        }
+
         return (
-          <CardLink key={index} href={attribs.href}>
+          <CardLink key={index} href={finalHref} isHashtag={isHashtag}>
             {domToReact(children as DOMNode[], options)}
           </CardLink>
         );

@@ -26,8 +26,8 @@ export default function ProfileHeader({
   actor: SimpleActorProfile;
 }) {
   const username = `@${actor.preferredUsername?.toString()}`;
-  const server = actor.url ? `@${new URL(actor.url).host}` : "";
-  const fullIdentifier = `${username}${server}`;
+  const server = actor.url ? new URL(actor.url).host : undefined;
+  const fullIdentifier = `${username}@${server || ""}`;
 
   const displayNameText =
     actor.name?.toString() ||
@@ -83,6 +83,7 @@ export default function ProfileHeader({
                 <EmojiHtml
                   html={bioText}
                   emojis={actor.emojis}
+                  server={server}
                   className="text-fg prose prose-sm max-w-none"
                 />
               </div>
