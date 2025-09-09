@@ -3,6 +3,7 @@ User-agent: *
 # Fediverse posts and profiles from other servers should not be indexed.
 Disallow: /post/
 Disallow: /profile/
+Disallow: /hashtag/
 
 # Allow any other pages.
 Allow: /

@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
         source: "/profile/:path*",
         headers: [{ key: "X-Robots-Tag", value: "noindex" }],
       },
+      {
+        source: "/hashtag/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex" }],
+      },
     ];
   },
   // allow any image domain
